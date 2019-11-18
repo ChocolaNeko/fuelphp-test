@@ -1,20 +1,3 @@
-<?php
-
-echo "===== profile =====";
-echo "<hr>";
-
-// echo $userId;
-// echo "<hr>";
-// echo $userEmail;
-// echo "<hr>";
-// echo $userTel;
-// echo "<hr>";
-
-// echo "<pre>", var_dump($members), "</pre>";
-// echo $members;
-
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +9,8 @@ echo "<hr>";
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </head>
 <body>
+    <h1>Member List</h1>
+    <hr>
     <table class="table table-bordered">
         <tr>
             <th>Id</th>
