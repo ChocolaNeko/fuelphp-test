@@ -1,10 +1,6 @@
 <?php
 
-// echo "===== home =====";
-// echo "<hr>";
-// echo "Welcome " . $name . "<br>";
-// echo "Load time: " . $loadTime;
-
+// session_start();
 ?>
 
 <!DOCTYPE html>
@@ -18,13 +14,15 @@
 <body>
     <h1>Home</h1>
     <hr>
-    <h3>載入時間 <?php echo $loadTime; ?></h3>
+    <h3><?php echo $loadTime; ?></h3>
 
     <a href="/apis/user/home">Home</a>
     <br><br><br>
     <a href="/apis/user/login">Login</a>
     <br><br><br>
     <a href="/apis/user/reg">Registration</a>
+    <br><br><br>
+    <a href="/apis/user/game">Game</a>
     <br><br><br>
     <a href="/apis/user/memberinfo">Member Page</a>
     <br><br><br>

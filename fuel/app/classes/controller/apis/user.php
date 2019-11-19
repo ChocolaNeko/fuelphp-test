@@ -44,49 +44,14 @@ class Controller_Apis_User extends Controller
 	public function action_memberlist()
 	{
         // pass database data to view 'profile'
-        $user = Model_Userdata::find_all();
-        $data = array();
-        $data['members'] = $user;
-        return View::forge('userpage/memberlist', $data);
+        // $user = Model_Userdata::find_all();
+        // $data = array();
+        // $data['members'] = $user;
+        return View::forge('userpage/memberlist');
     }
     
     public function action_reg()
     {
-        // $name = Input::post('name','');
-        // $account = Input::post('account','');
-        // $password = Input::post('password','');
-        // $email = Input::post('email','');
-        // $tel = Input::post('tel','');
-
-        // // regex validation
-        // // $val = Validation::forge();
-
-        // if ($name != '' && $account != '' && $password != '' && $email != '' && $tel != '' ) {
-        //     // account exist!?
-        //     $checkExist = Model_Userdata::find_one_by('account', $account);
-        //     if ($checkExist === null) {
-        //         // account not exist => save new user
-        //         echo $account . ": OK<br>";
-        //         $newUser = Model_Userdata::forge()->set(array(
-        //             'name' => $name,
-        //             'account' => $account,
-        //             'password' => $password,
-        //             'email' => $email,
-        //             'tel' => $tel
-        //         ));
-        //         if ($newUser->save()) {
-        //             echo "success!";
-        //         } else {
-        //             echo "reg failed!";
-        //         }
-        //     } else {
-        //         // account exist => error
-        //         echo $checkExist->account . ": XX";
-        //     }
-        // } else {
-        //     echo "empty";
-        // }
-
         // 此function單純顯示(回傳)註冊頁面 
         // 註冊資訊傳遞 參考 /apis/ajax.php
         return View::forge('userpage/reg');
@@ -102,6 +67,11 @@ class Controller_Apis_User extends Controller
     public function action_memberinfo()
     {
         return View::forge('userpage/memberinfo');
+    }
+
+    public function action_game()
+    {
+        return View::forge('userpage/game');
     }
 
 	public function action_setting()
