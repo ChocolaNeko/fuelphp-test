@@ -35,19 +35,29 @@ if (is_null($admin)) {
         <table class="table table-bordered">
             <tr>
                 <th>Id</th>
-                <th >Account</th>
-                <th>Money</th>
-                <th>Status</th>
+                <th >帳號</th>
+                <th>金額</th>
+                <th>帳號狀態</th>
+                <th>交易紀錄</th>
+                <th>金額調整</th>
                 <th>ban_btn</th>
                 <th>lock_btn</th>
+                <th>on_btn</th>
             </tr>
             <tr v-for="(item, index) in members" :key="index">
                 <td>{{ index + 1 }}</td>              
                 <td>{{ item.account }}</td>             
                 <td>{{ item.money }}</td>               
                 <td>{{ item.status }}</td>
+                <td><button v-on:click="record(item.account)">交易紀錄</button></td>
+                <td>
+                    <input type="text" maxlength="20" v-model="moneyChange">
+                    <button v-on:click="addMoney(item.account)">加錢</button>
+                    <button v-on:click="subMoney(item.account)">扣錢</button>
+                </td>
                 <td><button v-on:click="accBan(item.account)">凍結</button></td>               
                 <td><button v-on:click="accLock(item.account)">停權</button></td>               
+                <td><button v-on:click="accOn(item.account)">解除凍結/停權</button></td>               
             </tr>
         </table>
     </div>
@@ -60,7 +70,9 @@ if (is_null($admin)) {
                 members: [],
                 id: "",
                 ban: "",
-                lock: ""
+                lock: "",
+                on: "",
+                moneyChange: ""
             },
             mounted: function () {
                 this.showMembers();
@@ -127,6 +139,65 @@ if (is_null($admin)) {
                         }).catch(function (error) {
                             _this.lock = error;
                             alert(_this.lock);
+                        });
+                },
+                accOn(val) {
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'accOn');
+                    formData.append('value', val);
+                    axios.post('/apis/ajax/memberlist', formData)
+                        .then(function (response) {
+                            _this.on = response.data;
+                            alert(`帳號 ${val} 恢復啟用`);
+                            _this.showMembers();
+                        }).catch(function (error) {
+                            _this.on = error;
+                            alert(_this.on);
+                        });
+                },
+                addMoney(val) {
+                    // console.log(val);
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'addMoney');
+                    formData.append('value', `${this.moneyChange}|${val}`);
+                    axios.post('/apis/ajax/memberlist', formData)
+                        .then(function (response) {
+                            // _this.on = response.data;
+                            alert(`${response.data}`);
+                            _this.moneyChange = "";
+                            _this.showMembers();
+                        }).catch(function (error) {
+                            // _this.on = error;
+                            alert(error);
+                        });
+                },
+                subMoney(val) {
+                    // console.log(val);
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'subMoney');
+                    formData.append('value', `${this.moneyChange}|${val}`);
+                    axios.post('/apis/ajax/memberlist', formData)
+                        .then(function (response) {
+                            alert(`${response.data}`);
+                            _this.moneyChange = "";
+                            _this.showMembers();
+                        }).catch(function (error) {
+                            alert(error);
+                        });
+                },
+                record(val) {
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'record');
+                    formData.append('value', val);
+                    axios.post('/apis/ajax/memberlist', formData)
+                        .then(function (response) {
+                            window.location.replace(response.data);
+                        }).catch(function (error) {
+                            alert(error);
                         });
                 }
             },

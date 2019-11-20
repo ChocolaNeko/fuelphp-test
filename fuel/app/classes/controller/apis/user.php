@@ -77,5 +77,10 @@ class Controller_Apis_User extends Controller
 	public function action_setting()
 	{
 		return Response::forge(View::forge('userpage/setting'));
-	}
+    }
+    
+    public function action_record()
+    {
+        return View::forge('userpage/record');
+    }
 }

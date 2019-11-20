@@ -31,9 +31,9 @@ class Controller_Apis_Ajax extends Controller_Rest
                     if ($newUser->save()) {
                         // 註冊成功 寫一筆紀錄到交易紀錄內 （增加0元 目前0元 敘述：新會員初始值0元）
                         $firstRecord = DB::insert('money_record')->columns(array(
-                            'account', 'update_money', 'current_money', 'desc'
+                            'account', 'update_money', 'current_money', 'desc', 'status'
                         ))->values(array(
-                            $userAcc, 0, 0, '新會員初始值0元'
+                            $userAcc, 0, 0, '新會員初始值0元', 'new'
                         ))->execute();
                         echo "註冊成功";
                     } else {
@@ -150,6 +150,112 @@ class Controller_Apis_Ajax extends Controller_Rest
             case 'accLock':
                 $sql = DB::update('members')->value('status', 'lock')->where('account', '=', $value)->execute();
                 break;
+            case 'accOn':
+                $sql = DB::update('members')->value('status', 'on')->where('account', '=', $value)->execute();
+                break;
+            case 'addMoney':
+                $val = explode("|", $value);
+                // 取出原有金額 再 更新金額(原有+增加值)
+                $nowMoney = DB::select('money')->from('members')->where('account', '=', $val[1])->execute()->as_array();
+                $updateMoney = DB::update('members')->value('money', $nowMoney[0]['money'] + $val[0])->where('account', '=', $val[1]);
+                if ($updateMoney->execute()) {
+                    $sql = DB::select('money')->from('members')->where('account', '=', $val[1])->execute();
+                    $result_array = $sql->as_array();
+                    $addRecord = DB::insert('money_record')->columns(array(
+                        'account', 'update_money', 'current_money', 'desc', 'status'
+                    ))->values(array(
+                        $val[1], $val[0], $result_array[0]['money'], '管理員手動增加金額', 'add'
+                    ))->execute();
+                    echo "增加" . $val[0] . "元 成功";
+                } else {
+                    echo "增加失敗";
+                }
+                break;
+            case 'subMoney':
+                $val = explode("|", $value);
+                // 取出原有金額 先與 扣除金額比較
+                $nowMoney = DB::select('money')->from('members')->where('account', '=', $val[1])->execute()->as_array();
+                if ($nowMoney[0]['money'] >= $val[0]) {
+                    // 原有>欲扣 => 可扣
+                    $updateMoney = DB::update('members')->value('money', $nowMoney[0]['money'] - $val[0])->where('account', '=', $val[1]);
+                    if ($updateMoney->execute()) {
+                        $sql = DB::select('money')->from('members')->where('account', '=', $val[1])->execute()->as_array();
+                        $addRecord = DB::insert('money_record')->columns(array(
+                            'account', 'update_money', 'current_money', 'desc', 'status'
+                        ))->values(array(
+                            $val[1], $val[0], $sql[0]['money'], '管理員手動扣除金額', 'sub'
+                        ))->execute();
+                        echo "扣款" . $val[0] . "元 成功";
+                    } else {
+                        echo "扣款失敗";
+                    }
+
+                } else {
+                    // 原有<欲扣 => 不可扣
+                    echo "扣款失敗(扣除金額不得小於原有金額)";
+                }
+                break;
+            case 'record':
+                // 新增一個session 用來導到交易紀錄頁面 呈現指定會員交易紀錄
+                Session::set('record', $value);
+                echo "/apis/user/record";
+                break;
+            default:
+                echo "POST ERROR";
+                break;
+        }
+    }
+
+    public function post_record()
+    {
+        $flag = $_POST['flag'];
+        $value = $_POST['value'];
+
+        switch ($flag) {
+            case 'backList':
+                // 將session清除 導回會員清單頁面
+                Session::delete('record');
+                echo "/apis/user/memberlist";
+                break;
+            case 'getRecord':
+                // 取得指定會員交易紀錄
+                $memberRecord = Session::get('record');
+                // SELECT * FROM `money_record`
+                $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->order_by('update_time','desc')->execute()->as_array();
+                echo json_encode($sql);
+                break;
+            default:
+                echo "POST ERROR";
+                break;
+        }
+    }
+
+    public function post_game()
+    {
+        $flag = $_POST['flag'];
+        $value = $_POST['value'];
+        $barList = ["B","B","I","N","*","*"];
+
+        switch ($flag) {
+            case 'go':
+                // 紀錄本次遊戲投注注項
+                $betList = explode(",", $value);
+                // RNG產生4個值
+                $result = [];
+                array_push($result, $barList[rand(0, 5)]);
+                array_push($result, $barList[rand(0, 5)]);
+                array_push($result, $barList[rand(0, 5)]);
+                array_push($result, $barList[rand(0, 5)]);
+                
+                // 輸出此次結果 及與此符合的注項
+                $countBarList = array_count_values($result);
+                if (isset($countBarList['B'])){
+                    echo $countBarList['B'] . "個B - " . json_encode($result);
+                } else {
+                    echo "0個B - " . json_encode($result);
+                }
+                break;
+            
             default:
                 echo "POST ERROR";
                 break;
