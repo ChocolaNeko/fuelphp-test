@@ -14,7 +14,7 @@
     <h1>Game</h1>
     <hr>
     <div id="bar">
-        <button v-on:click="go">GO!</button>
+        <button v-on:click="go" v-bind:disabled="goBtn">GO!</button>
         <br><br>
         <table class="table-bordered">
             <tr>
@@ -27,20 +27,26 @@
         <br>
         <label for="">{{ msg }}</label>
         <br>
+        <label for="">BINS對應數量 - 拉霸盤面 - 中獎注項</label>
+        <br>
+        <label for="">{{ result }}</label>
+        <br>
         <button v-on:click="clearAll">清空所有投注組合</button>
+        <br><br>
+        <button v-on:click="saveAll" v-bind:disabled="editDisabled">確認下注</button>
         <br><br>
         <table class="bet table-bordered">
             <tr>
                 <th>注項</th>
-                <th><button v-on:click="bet('0個B')">0個B</button></th>
-                <th><button v-on:click="bet('1個B')">1個B</button></th>
-                <th><button v-on:click="bet('2個B')">2個B</button></th>
-                <th><button v-on:click="bet('3個B')">3個B</button></th>
-                <th><button v-on:click="bet('4個B')">4個B</button></th>
-                <th><button v-on:click="bet('BBBB')">BBBB</button></th>
-                <th><button v-on:click="bet('IIII')">IIII</button></th>
-                <th><button v-on:click="bet('NNNN')">NNNN</button></th>
-                <th><button v-on:click="bet('****')">****</button></th>
+                <th class="text-center"><label>0個B</label></th>
+                <th class="text-center"><label>1個B</label></th>
+                <th class="text-center"><label>2個B</label></th>
+                <th class="text-center"><label>3個B</label></th>
+                <th class="text-center"><label>4個B</label></th>
+                <th class="text-center"><label>BBBB</label></th>
+                <th class="text-center"><label>IIII</label></th>
+                <th class="text-center"><label>NNNN</label></th>
+                <th class="text-center"><label>****</label></th>
             </tr>
             <tr>
                 <th class="text-center">賠率</th>
@@ -53,6 +59,18 @@
                 <th class="text-center">50</th>
                 <th class="text-center">50</th>
                 <th class="text-center">100</th>
+            </tr>
+            <tr>
+                <th class="text-center">金額</th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betA" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betB" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betC" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betD" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betE" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betF" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betG" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betH" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><input type="number" min="0" max="5000" step="1" v-model="betI" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
             </tr>
         </table>
         <hr>
@@ -70,14 +88,30 @@
                 barB: "B",
                 barC: "I",
                 barD: "N",
+                betA: "",
+                betB: "",
+                betC: "",
+                betD: "",
+                betE: "",
+                betF: "",
+                betG: "",
+                betH: "",
+                betI: "",
                 result: [],
                 msg: "",
+                editDisabled : false,
+                goBtn: true,
+            },
+            watch: {
+                
             },
             methods: {
                 go() {
-                    if (this.betList.length == 0) {
-                        // console.log('請先下注');
-                        alert('請先下注');
+                    const isBelowThreshold = (currentValue) => currentValue != "0";
+                    let notZero = this.betList.every(isBelowThreshold);
+                    // console.log(notZero);
+                    if (notZero == false) {
+                        alert('至少要有一注金額大於0');
                     } else {
                         let _this = this;
                         let formData = new FormData();
@@ -86,34 +120,60 @@
                         axios.post('/apis/ajax/game', formData)
                             .then(function (response) {
                                 _this.result = response.data;
-                                // 結果
-                                let temp = _this.result.split(' - ');
-                                temp[1] = temp[1].replace(/[",]/gm, "");
-                                temp[1] = temp[1].replace("[", "");
-                                temp[1] = temp[1].replace("]", "");
-                                _this.msg = temp[0];
-                                // 拉霸盤面
-                                let temp1 = temp[1].split('');
-                                _this.barA = temp1[0];
-                                _this.barB = temp1[1];
-                                _this.barC = temp1[2];
-                                _this.barD = temp1[3];
+
+                                // // 結果 => temp[0]
+                                // let temp = _this.result.split('-');
+                                // _this.msg = temp[0];
+
+                                // // 拉霸盤面 => temp[1]
+                                // let showBar = temp[1].replace(/[[]/gm,"");
+                                // showBar = showBar.replace(/["]]/gm,"");
+                                // showBar = showBar.replace(/[",]/gm,"");
+                                // showBar = showBar.split('');
+                                // // console.log(showBar);
+                                // _this.barA = showBar[0];
+                                // _this.barB = showBar[1];
+                                // _this.barC = showBar[2];
+                                // _this.barD = showBar[3];
+
                             }).catch(function (error){
                                 alert(error);
                             });
                     }
                 },
-                bet(val) {
-                    if (this.betList.includes(val)) {
-                        alert('任一種組合只能選一次');
-                    } else {
-                        this.betList.push(val);
-                    }
-                    // console.log(this.betList.length);
-                },
                 clearAll() {
                     this.betList = [];
-                }
+                    this.betA = "";
+                    this.betB = "";
+                    this.betC = "";
+                    this.betD = "";
+                    this.betE = "";
+                    this.betF = "";
+                    this.betG = "";
+                    this.betH = "";
+                    this.betI = "";
+                    this.editDisabled = false;
+                    this.goBtn = true;
+                },
+                saveAll() {
+                    if (this.betA == "" && this.betB == "" && this.betC == "" && this.betD == "" && this.betE == "" && this.betF == "" && this.betG == "" && this.betH == "" && this.betI == "") {
+                        alert('至少下一注');
+                    } else {
+                        this.betList.push(this.betA);
+                        this.betList.push(this.betB);
+                        this.betList.push(this.betC);
+                        this.betList.push(this.betD);
+                        this.betList.push(this.betE);
+                        this.betList.push(this.betF);
+                        this.betList.push(this.betG);
+                        this.betList.push(this.betH);
+                        this.betList.push(this.betI);
+                        this.editDisabled = true;
+                        this.goBtn = false;
+                    }
+                    
+                    // console.log(this.betList.length);
+                },
             },
         });
     </script>

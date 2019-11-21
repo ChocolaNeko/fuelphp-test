@@ -95,7 +95,7 @@ class Controller_Apis_Ajax extends Controller_Rest
         switch ($flag) {
             case 'logout':
                 Session::destroy();
-                echo "http://localhost/apis/user/login";
+                echo "/apis/user/login";
                 break;
             case 'nowSession':
                 $nowSession = Session::get('member');
@@ -137,7 +137,7 @@ class Controller_Apis_Ajax extends Controller_Rest
         switch ($flag) {
             case 'logout':
                 Session::destroy();
-                echo "http://localhost/apis/user/login";
+                echo "/apis/user/login";
                 break;
             case 'showMembers':
                 $sql = DB::select('id', 'account', 'money', 'status')->from('members')->where('account', '!=', 'admin')->execute();
@@ -238,22 +238,112 @@ class Controller_Apis_Ajax extends Controller_Rest
 
         switch ($flag) {
             case 'go':
-                // 紀錄本次遊戲投注注項
+                // 紀錄本次遊戲投注注項 (待取用)
                 $betList = explode(",", $value);
-                // RNG產生4個值
+                /* --- RNG產生4個值 組成拉霸盤面(一組陣列) --- */
                 $result = [];
                 array_push($result, $barList[rand(0, 5)]);
                 array_push($result, $barList[rand(0, 5)]);
                 array_push($result, $barList[rand(0, 5)]);
                 array_push($result, $barList[rand(0, 5)]);
-                
-                // 輸出此次結果 及與此符合的注項
+
+                /* ----- 計算BINS 個別值 ----- */
+                $countB = 0;
+                $countI = 0;
+                $countN = 0;
+                $countStar = 0;
                 $countBarList = array_count_values($result);
+                // 計算B數 (不考慮*出現位置)
                 if (isset($countBarList['B'])){
-                    echo $countBarList['B'] . "個B - " . json_encode($result);
+                    $countB = $countBarList['B'];
                 } else {
-                    echo "0個B - " . json_encode($result);
+                    $countB = 0;
                 }
+                // 計算I數 (不考慮*出現位置)
+                if (isset($countBarList['I'])){
+                    $countI = $countBarList['I'];
+                } else {
+                    $countI = 0;
+                }
+                // 計算N數 (不考慮*出現位置)
+                if (isset($countBarList['N'])){
+                    $countN = $countBarList['N'];
+                } else {
+                    $countN = 0;
+                }
+                // 計算*數 (不考慮*出現位置)
+                if (isset($countBarList['*'])){
+                    $countStar = $countBarList['*'];
+                } else {
+                    $countStar = 0;
+                }
+                // 計算實際B數量 (當P1 P2 出現 * 時, B數+1)
+                if ($result[0] == '*' && $result[1] == '*') {
+                    $countB = $countB + 2;
+                } elseif (($result[0] == '*' && $result[1] != '*') || ($result[0] != '*' && $result[1] == '*')) {
+                    $countB = $countB + 1;
+                }
+                // 計算實際I數量 (當P3 出現 * 時, I數+1)
+                if ($result[2] == '*') {
+                    $countI = $countI + 1;
+                }
+                // 計算實際N數量 (當P4 出現 * 時, N數+1)
+                if ($result[3] == '*') {
+                    $countN = $countN + 1;
+                }
+                // BINS 四位數組成
+                $bins = $countB . $countI . $countN . $countStar;
+
+                /* ----- 計算中獎注項 ----- */
+                $winList = [];
+                switch ($countB) {
+                    case 0:
+                        array_push($winList, '0B');
+                        break;
+                    case 1:
+                        array_push($winList, '1B');
+                        break;
+                    case 2:
+                        array_push($winList, '2B');
+                        break;
+                    case 3:
+                        array_push($winList, '3B');
+                        break;
+                    case 4:
+                        array_push($winList, '4B');
+                        break;
+                    default:
+                        // none
+                        break;
+                }
+                if ($countI == 4) {
+                    array_push($winList, 'IIII');
+                }
+                if ($countN == 4) {
+                    array_push($winList, 'NNNN');
+                }
+                if ($countStar == 4) {
+                    if (array_search('2B', $winList) === false) {
+                        array_push($winList, '2B');
+                    }
+                    array_push($winList, '****');
+                }
+                // 寫檔 (測試用)
+                $file = 'win_record.txt';
+                // Open the file to get existing content
+                $current = file_get_contents($file);
+                // Append a new person to the file
+                $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . "\n";
+                // Write the contents back to the file
+                file_put_contents($file, $current);
+
+                // $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . "\n";
+                // file_put_contents($file, $current);
+
+
+                // 回傳 BINS-拉霸盤面(一組陣列)-中獎注項(一組陣列)
+                echo $bins . " - " . json_encode($result) . " - " . json_encode($winList);
+                // var_dump($value);
                 break;
             
             default:
