@@ -8,6 +8,7 @@ return array(
       array(
         0 => '001_members',
         1 => '002_moneyrecord',
+        2 => '003_betrecord',
       ),
     ),
     'module' => 

@@ -83,4 +83,9 @@ class Controller_Apis_User extends Controller
     {
         return View::forge('userpage/record');
     }
+
+    public function action_betrecord()
+    {
+        return View::forge('userpage/betrecord');
+    }
 }

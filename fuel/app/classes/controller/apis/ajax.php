@@ -238,8 +238,6 @@ class Controller_Apis_Ajax extends Controller_Rest
 
         switch ($flag) {
             case 'go':
-                // 紀錄本次遊戲投注注項 (待取用)
-                $betList = explode(",", $value);
                 /* --- RNG產生4個值 組成拉霸盤面(一組陣列) --- */
                 $result = [];
                 array_push($result, $barList[rand(0, 5)]);
@@ -328,22 +326,65 @@ class Controller_Apis_Ajax extends Controller_Rest
                     }
                     array_push($winList, '****');
                 }
+
+                /* ----- 判斷是否出現BONUS ----- */
+                $bonus = 'NO';
+                if ($result[0] == 'B' && $result[1] == 'B' && $result[2] == 'I' && $result[3] == 'N') {
+                    $bonus = 'YES';
+                } elseif ($result[0] == '*' && $result[1] == '*' && $result[2] == '*' && $result[3] == '*') {
+                    $bonus = 'YES';
+                }
+
+                /* ----- 回傳此次下注中獎注項 ----- */
+                $betMoney = explode(",", $value); // 取得下注獎金
+                for ($i = 0; $i < count($betMoney); $i++) {
+                    if ($betMoney[$i] == '') {
+                        $betMoney[$i] = '0';
+                    }
+                }
+                // 0個B 1個B    2個B	3個B	4個B	BBBB	IIII	NNNN	****
+                //  20	 12	    4	    12	   20	   30	   50	   50	   100
+                // 若此注項下注0元 => 代表沒有下此注項 欄位清空 => 更新 $betPosition
+                $betPosition = ['0B', '1B', '2B', '3B', '4B', 'BBBB', 'IIII', 'NNNN', '****'];
+                for ($i = 0; $i < count($betMoney); $i++) {
+                    if ($betMoney[$i] == '') {
+                        $betPosition[$i] = '';
+                    }
+                }
+                $moneyBack = ['', '', '', '', '', '', '', '', '']; // 此次下注中獎注項
+                foreach ($winList as $k => $v) {
+                    if (array_search($v, $betPosition) !== false) {
+                        $moneyBack[array_search($v, $betPosition)] = $v;
+                    }
+                }
+
+                /* ----- 回傳此次下注中獎獎金 ----- */
+                $rate = [20, 12, 4, 12, 20, 30, 50, 50, 100];
+                for ($i = 0; $i < count($betMoney); $i++) {
+                    if ($moneyBack[$i] != '') {
+                        $betMoney[$i] = $betMoney[$i] * $rate[$i];
+                        if ($bonus == 'YES') {
+                            $betMoney[$i] = $betMoney[$i] * 2;
+                        }
+                        $betMoney[$i] = (string)$betMoney[$i];
+                    } else {
+                        if ($bonus != 'YES'){
+                            $betMoney[$i] = "0";
+                        }
+                    }
+                }
+                
                 // 寫檔 (測試用)
                 $file = 'win_record.txt';
-                // Open the file to get existing content
                 $current = file_get_contents($file);
-                // Append a new person to the file
-                $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . "\n";
-                // Write the contents back to the file
+                $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus . "\n";
                 file_put_contents($file, $current);
 
-                // $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . "\n";
-                // file_put_contents($file, $current);
+                // 將此下注紀錄 寫入資料庫
 
 
-                // 回傳 BINS-拉霸盤面(一組陣列)-中獎注項(一組陣列)
-                echo $bins . " - " . json_encode($result) . " - " . json_encode($winList);
-                // var_dump($value);
+                // 回傳 BINS - 拉霸盤面(一組陣列) - 中獎注項(一組陣列) - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS
+                echo $bins . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus;
                 break;
             
             default:

@@ -22,7 +22,7 @@
     <br><br><br>
     <a href="/apis/user/reg">Registration</a>
     <br><br><br>
-    <a href="/apis/user/game">Game</a>
+    <a href="/apis/user/game">Slot Game</a>
     <br><br><br>
     <a href="/apis/user/memberinfo">Member Page</a>
     <br><br><br>
