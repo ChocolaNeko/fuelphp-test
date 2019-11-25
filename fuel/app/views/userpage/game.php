@@ -15,10 +15,12 @@ if (is_null($member)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    
 </head>
 <body>
     <h1>Slot Game</h1>
@@ -45,9 +47,9 @@ if (is_null($member)) {
         <br>
         <!-- <input type="text" id="cannotCP" onkeypress='return event.charCode >= 48 && event.charCode <= 57'> -->
         <!-- <br><br> -->
-        <button class="btn btn-primary" v-on:click="clearAll">清空所有投注組合</button>
+        <button class="btn btn-primary" v-on:click="clearAll">重新下注</button>
         <br><br>
-        <button class="btn btn-primary" v-on:click="saveAll" v-bind:disabled="editDisabled">確認下注</button>
+        <button class="btn btn-primary" v-on:click="saveAll" v-bind:disabled="editDisabled">下注</button>
         <br><br>
         <table class="bet table-bordered w-auto">
             <tr>
@@ -88,6 +90,12 @@ if (is_null($member)) {
             </tr>
         </table>
         <hr>
+        錢包餘額：
+        <label for="">{{ nowTotalMoney }}</label>
+        <br><br>
+        <!-- 下注後餘額：
+        <label for="">{{ nowTotalMoney }}</label>
+        <br><br> -->
         <table class="table-bordered w-75">
             <tr>
                 <th class="text-center"></th>
@@ -167,46 +175,60 @@ if (is_null($member)) {
                 winMoney: [],
                 totalBetMoney: "",
                 totalWinMoney: "",
+                wallet: "",
+            },
+            mounted() {
+                this.getMoney();
+            },
+            computed: {
+                // 計算下注後餘額
+                nowTotalMoney: function() {
+                    return this.wallet - this.totalBetMoney;
+                }
             },
             methods: {
                 go() {
-                    // const isBelowThreshold = (currentValue) => currentValue >= 0;
-                    // let notZero = this.betList.every(isBelowThreshold);
-                    // console.log(notZero);
-                    // if (notZero == false) {
-                    //     alert('至少要有一注金額大於0');
-                    // } else {
-                    let _this = this;
-                    let formData = new FormData();
-                    formData.append('flag', 'go');
-                    formData.append('value', this.betList);
-                    axios.post('/apis/ajax/game', formData)
-                        .then(function (response) {
-                            _this.result = response.data;
+                    this.getMoney(); // 開始前再次確認餘額
+                    if (this.wallet - this.totalBetMoney < 0) {
+                        alert("投注金額超過目前餘額，請重新下注");
+                        this.clearAll();
+                    } else {
+                        let _this = this;
+                        let formData = new FormData();
+                        formData.append('flag', 'go');
+                        formData.append('value', this.betList);
+                        axios.post('/apis/ajax/game', formData)
+                            .then(function (response) {
+                                _this.result = response.data;
 
-                            let temp = _this.result.split('-');
-                            // 顯示派彩結果與派彩總金額
-                            _this.winMoney = temp[4];
-                            _this.winMoney = _this.winMoney.replace(/[[]/gm,"");
-                            _this.winMoney = _this.winMoney.replace(/["]]/gm,"");
-                            _this.winMoney = _this.winMoney.replace(/["]/gm,"");
-                            _this.winMoney = _this.winMoney.split(',');
-                            const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
-                            _this.totalWinMoney = _this.winMoney.reduce(reducer);
+                                let temp = _this.result.split('-');
+                                // 顯示派彩結果與派彩總金額
+                                _this.winMoney = temp[4];
+                                _this.winMoney = _this.winMoney.replace(/[[]/gm,"");
+                                _this.winMoney = _this.winMoney.replace(/["]]/gm,"");
+                                _this.winMoney = _this.winMoney.replace(/["]/gm,"");
+                                _this.winMoney = _this.winMoney.split(',');
+                                const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
+                                _this.totalWinMoney = _this.winMoney.reduce(reducer);
 
-                            // 顯示拉霸盤面
-                            let barView = temp[1];
-                            barView = barView.replace(/[[]/gm,"");
-                            barView = barView.replace(/["]]/gm,"");
-                            barView = barView.replace(/["]/gm,"");
-                            barView = barView.split(',');
-                            _this.barA = barView[0];
-                            _this.barB = barView[1];
-                            _this.barC = barView[2];
-                            _this.barD = barView[3];
-                        }).catch(function (error){
-                            alert(error);
-                        });
+                                // 顯示拉霸盤面
+                                let barView = temp[1];
+                                barView = barView.replace(/[[]/gm,"");
+                                barView = barView.replace(/["]]/gm,"");
+                                barView = barView.replace(/["]/gm,"");
+                                barView = barView.split(',');
+                                _this.barA = barView[0];
+                                _this.barB = barView[1];
+                                _this.barC = barView[2];
+                                _this.barD = barView[3];
+
+                                _this.getMoney(); // 每次遊戲結束後 更新會員目前餘額
+                                // _this.clearAll() // 遊戲結束後 初始化
+                            }).catch(function (error){
+                                alert(error);
+                            });
+                    }
+                    
                     
                 },
                 clearAll() {
@@ -260,13 +282,32 @@ if (is_null($member)) {
                             // 計算投注總金額
                             const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
                             this.totalBetMoney = this.betList.reduce(reducer);
-                            this.editDisabled = true;
-                            this.goBtn = false;
+                            if (this.nowTotalMoney < 0) {
+                                alert("投注金額超過目前餘額，請重新下注");
+                                this.clearAll();
+                            } else {
+                                this.editDisabled = true;
+                                this.goBtn = false;
+                            }
+                            
                         }
                     }
                 },
                 betrecord() {
                     window.location.replace('/apis/user/betrecord');
+                },
+                getMoney() {
+                    // 遊戲開始前 結束後 都需要取得會員目前餘額
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'getMoney');
+                    formData.append('value', 'none');
+                    axios.post('/apis/ajax/game', formData)
+                        .then(function (response) {
+                            _this.wallet = response.data;
+                        }).catch(function (error){
+                            alert(error);
+                        });
                 }
             },
         });

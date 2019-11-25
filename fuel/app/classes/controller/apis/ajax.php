@@ -14,15 +14,15 @@ class Controller_Apis_Ajax extends Controller_Rest
         $userPwd = $_POST['password'];
 
         if ($userAcc != '' && $userPwd != '') {
-            // check regex
+            // regex檢查
             $checkAcc = preg_match("/^[A-Za-z0-9]{5,}$/", $userAcc);
             $checkPwd = preg_match("/^[A-Za-z0-9]{5,}$/", $userPwd);
 
             if ($checkAcc && $checkPwd) {
-                // pass regex => account exist!?
+                // 通過regex => 檢查是否有此帳號!?
                 $checkExist = Model_Userdata::find_one_by('account', $userAcc);
                 if ($checkExist === null) {
-                    // account not exist => save new user
+                    // 帳號不存在 => 新增此筆會員資料
                     $passwordHash = password_hash($userPwd, PASSWORD_DEFAULT);
                     $newUser = Model_Userdata::forge()->set(array(
                         'account' => $userAcc,
@@ -277,9 +277,11 @@ class Controller_Apis_Ajax extends Controller_Rest
                 }
                 // 計算實際B數量 (當P1 P2 出現 * 時, B數+1)
                 if ($result[0] == '*' && $result[1] == '*') {
-                    $countB = $countB + 2;
+                    $countB = $countB + 2; // P1 P2 = ** => 等同於2個B
                 } elseif (($result[0] == '*' && $result[1] != '*') || ($result[0] != '*' && $result[1] == '*')) {
-                    $countB = $countB + 1;
+                    $countB = $countB + 1; // P1 P2 = *X or X* => 等同於1個B
+                } elseif (($result[0] == '*' && $result[1] == 'B') || ($result[0] == 'B' && $result[1] == '*')) {
+                    $countB = $countB + 1; // P1 P2 = *B or B* => 等同於2個B 但上面已算過B出現次數 因此只需要加上 *等效於B 也就是 +1
                 }
                 // 計算實際I數量 (當P3 出現 * 時, I數+1)
                 if ($result[2] == '*') {
@@ -296,7 +298,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                 $winList = [];
                 switch ($countB) {
                     case 0:
-                        array_push($winList, '0B');
+                        array_push($winList, '0B'); 
                         break;
                     case 1:
                         array_push($winList, '1B');
@@ -309,6 +311,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                         break;
                     case 4:
                         array_push($winList, '4B');
+                        array_push($winList, 'BBBB');
                         break;
                     default:
                         // none
@@ -337,7 +340,8 @@ class Controller_Apis_Ajax extends Controller_Rest
 
                 /* ----- 回傳此次下注中獎注項 ----- */
                 $betMoney = explode(",", $value); // 取得下注獎金
-                for ($i = 0; $i < count($betMoney); $i++) {
+                $totalBetMoney = array_sum($betMoney); // 先計算總投注金額
+                for ($i = 0; $i < count($betMoney); $i++) { // 輸入為空白 => 代表沒下此注(等同0元)
                     if ($betMoney[$i] == '') {
                         $betMoney[$i] = '0';
                     }
@@ -347,7 +351,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                 // 若此注項下注0元 => 代表沒有下此注項 欄位清空 => 更新 $betPosition
                 $betPosition = ['0B', '1B', '2B', '3B', '4B', 'BBBB', 'IIII', 'NNNN', '****'];
                 for ($i = 0; $i < count($betMoney); $i++) {
-                    if ($betMoney[$i] == '') {
+                    if ($betMoney[$i] == '0') {
                         $betPosition[$i] = '';
                     }
                 }
@@ -355,6 +359,14 @@ class Controller_Apis_Ajax extends Controller_Rest
                 foreach ($winList as $k => $v) {
                     if (array_search($v, $betPosition) !== false) {
                         $moneyBack[array_search($v, $betPosition)] = $v;
+                    }
+                }
+
+                /* ----- 判斷是否中獎 ----- */
+                $betResult = "未中獎";
+                for ($i = 0; $i < count($betPosition); $i++) {
+                    if ($betPosition[$i] === $moneyBack[$i]) {
+                        $betResult = "中獎";
                     }
                 }
 
@@ -373,6 +385,8 @@ class Controller_Apis_Ajax extends Controller_Rest
                         }
                     }
                 }
+                $totalReward = array_sum($betMoney); // 計算總中獎金額
+
                 
                 // 寫檔 (測試用)
                 $file = 'win_record.txt';
@@ -380,13 +394,71 @@ class Controller_Apis_Ajax extends Controller_Rest
                 $current .= $bins . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus . "\n";
                 file_put_contents($file, $current);
 
-                // 將此下注紀錄 寫入資料庫
+                DB::start_transaction(); // 啟動MYSQL交易機制
+                $msg = ""; // 設定回傳訊息
 
+                /* ----- 先扣錢 並寫一筆交易紀錄 註明為 下注扣款 ----- */
+                // 取得原本金額 再減去下注總金額($totalBetMoney)
+                $nowMember = Session::get('member');
+                $getPrevMoney = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
+                if ($totalBetMoney > $getPrevMoney[0]['money']) {
+                    $msg = "餘額不足，此次交易失敗";
+                } else {
+                    $updateMoney = DB::update('members')->value('money', $getPrevMoney[0]['money'] - $totalBetMoney)->where('account', '=', $nowMember);
+                    if ($updateMoney->execute()) {
+                        // 執行成功 => 寫一筆交易紀錄 註明為 下注扣款
+                        $moneyRecord = DB::insert('money_record')->columns(array(
+                            'account', 'update_money', 'current_money', 'desc', 'status'
+                        ))->values(array(
+                            $nowMember, $totalBetMoney, $getPrevMoney[0]['money'] - $totalBetMoney, '下注扣款', 'bet'
+                        ))->execute();
+                    } else {
+                        $msg = "交易失敗-扣款";
+                        DB::rollback_transaction(); // 交易失敗 rollback
+                    }
+                }
 
+                /* ----- 開獎後 寫一筆下注紀錄 包含此次下注注項 下注結果(中獎/未中獎) ｜ 若有中獎 寫一筆交易紀錄 並加錢 ----- */
+                $betRecord = DB::insert('bet_record')->columns(array(
+                    'account', 'bet_list', 'bet_result', 'bet_desc'  // bet_desc 放此次中獎注項
+                ))->values(array(
+                    $nowMember, json_encode($betPosition), $betResult, json_encode($moneyBack)
+                ));
+                if ($betRecord->execute()) {
+                    // 下注紀錄儲存成功 => 判斷是否中獎 
+                    if ($betResult == "中獎") {
+                        // 中獎 => 加錢 並寫一筆交易紀錄
+                        $getPrevMoney = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
+                        $updateMoney = DB::update('members')->value('money', $getPrevMoney[0]['money'] + $totalReward)->where('account', '=', $nowMember);
+                        if ($updateMoney->execute()) {
+                            // 執行成功 => 寫一筆交易紀錄 註明為 下注獲利
+                            $moneyRecord = DB::insert('money_record')->columns(array(
+                                'account', 'update_money', 'current_money', 'desc', 'status'
+                            ))->values(array(
+                                $nowMember, $totalReward, $getPrevMoney[0]['money'] + $totalReward, '下注獲利', 'win'
+                            ))->execute();
+                        } else {
+                            $msg = "交易失敗-獲利寫入";
+                            DB::rollback_transaction(); // 交易失敗 rollback
+                        }
+                    }
+                    // 下注 扣錢(更新會員金額 寫入交易紀錄) => 開獎(寫入下注紀錄 中獎時 更新會員金額與寫入交易紀錄) 
+                    // 上述動作完成後 做最後commit 完成MYSQL交易機制
+                    DB::commit_transaction(); 
+                } else {
+                    $msg = "下注紀錄儲存失敗";
+                    DB::rollback_transaction(); // 交易失敗 rollback
+                }
                 // 回傳 BINS - 拉霸盤面(一組陣列) - 中獎注項(一組陣列) - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS
-                echo $bins . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus;
+                echo $betResult . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $msg;
                 break;
-            
+
+            case 'getMoney':
+                $nowMember = Session::get('member');
+                $sql = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
+                echo $sql[0]['money'];
+                break;
+
             default:
                 echo "POST ERROR";
                 break;
