@@ -4,13 +4,13 @@ use Fuel\Core\Validation;
 
 class Controller_Apis_User extends Controller
 {
-	public function action_home()
-	{
+    public function action_home()
+    {
         // The data parameter only accepts objects and arrays.
         $userInfo = array();
         $userInfo['loadTime'] = date('l jS \of F Y h:i:s A');
         // var_dump($userInfo);
-		return View::forge('userpage/home', $userInfo);
+        return View::forge('userpage/home', $userInfo);
     }
     
     public function action_newhome()
@@ -41,8 +41,8 @@ class Controller_Apis_User extends Controller
         return $view;
     }
 
-	public function action_memberlist()
-	{
+    public function action_memberlist()
+    {
         // pass database data to view 'profile'
         // $user = Model_Userdata::find_all();
         // $data = array();
@@ -52,10 +52,9 @@ class Controller_Apis_User extends Controller
     
     public function action_reg()
     {
-        // 此function單純顯示(回傳)註冊頁面 
+        // 此function單純顯示(回傳)註冊頁面
         // 註冊資訊傳遞 參考 /apis/ajax.php
         return View::forge('userpage/reg');
-
     }
 
     public function action_login()
@@ -74,9 +73,9 @@ class Controller_Apis_User extends Controller
         return View::forge('userpage/game');
     }
 
-	public function action_setting()
-	{
-		return Response::forge(View::forge('userpage/setting'));
+    public function action_setting()
+    {
+        return Response::forge(View::forge('userpage/setting'));
     }
     
     public function action_record()

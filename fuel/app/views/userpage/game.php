@@ -3,7 +3,8 @@ use Fuel\Core\Session;
 
 $member = Session::get('member');
 if (is_null($member)) {
-    header('Location: /apis/user/login');
+    // echo "請登入";
+    // header('Location: /apis/user/login');
 }
 
 ?>
@@ -23,14 +24,73 @@ if (is_null($member)) {
     
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/apis/user/home">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/apis/user/login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/apis/user/reg">Registration</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/apis/user/game">Slot Game</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/apis/user/memberinfo">Member Page</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/apis/user/memberlist">Member List</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <br>
     <h1>Slot Game</h1>
     <hr>
+    
     <div id="bar">
         <?php echo "歡迎 " . $member; ?>
+        , {{ accountStatus }}
+        , 錢包餘額：
+        <label for="">{{ nowTotalMoney }}</label>
+        <br><br>
+        <!-- 操作說明區 -->
+        <div class="accordion" id="gameIntroduce">
+            <div class="card">
+                <div class="card-header" id="first">
+                    <h2>
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne"
+                            aria-expanded="true" aria-controls="collapseOne">
+                            遊戲說明
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseOne" class="collapse" aria-labelledby="first" data-parent="#gameIntroduce">
+                    <div class="card-body">
+                        1. 在想下注的注項，填上想下注的金額，不下注的注項請填"0"
+                        <br><br>
+                        2. 確認下注注項與下注金額後，按"下注"按鈕，鎖定此次下注
+                        <br><br>
+                        3. 若要修改，可點選重新下注進行重選，選好後一樣按下"下注"按鈕，鎖定此次下注
+                        <br><br>
+                        4. 鎖定完成後，按下"GO"按鈕進行拉霸，即可馬上得知結果與派彩獎金
+                        <br><br>
+                        5. 若要再次遊玩，則再依照步驟1~4操作即可
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <br><br>
         <button class="btn btn-primary" v-on:click="go" v-bind:disabled="goBtn">GO!</button>
         <br><br>
-        <table class="table-bordered">
+        <table class="table table-bordered">
             <tr>
                 <th class="text-center"> {{ barA }} </th>
                 <th class="text-center"> {{ barB }} </th>
@@ -47,7 +107,7 @@ if (is_null($member)) {
         <br>
         <!-- <input type="text" id="cannotCP" onkeypress='return event.charCode >= 48 && event.charCode <= 57'> -->
         <!-- <br><br> -->
-        <button class="btn btn-primary" v-on:click="clearAll">重新下注</button>
+        <button class="btn btn-primary" v-on:click="clearAll" v-bind:disabled="resetDisabled">重新下注</button>
         <br><br>
         <button class="btn btn-primary" v-on:click="saveAll" v-bind:disabled="editDisabled">下注</button>
         <br><br>
@@ -90,9 +150,6 @@ if (is_null($member)) {
             </tr>
         </table>
         <hr>
-        錢包餘額：
-        <label for="">{{ nowTotalMoney }}</label>
-        <br><br>
         <!-- 下注後餘額：
         <label for="">{{ nowTotalMoney }}</label>
         <br><br> -->
@@ -140,17 +197,8 @@ if (is_null($member)) {
         <hr>
         <button class="btn btn-primary" v-on:click="betrecord">查看下注紀錄</button>
     </div>
-    
 
     <script>
-        // 禁用貼上功能 (WIP)
-        // window.onload = function () {
-        //     const cannotCP = document.getElementsByClassName('cannotCP');
-        //     cannotCP.onpaste = function (e) {
-        //         console.log("paste");
-        //         e.preventDefault();
-        //     }
-        // };
         let bar = new Vue({
             el: "#bar",
             data: {
@@ -172,16 +220,19 @@ if (is_null($member)) {
                 msg: "",
                 editDisabled : false,
                 goBtn: true,
+                resetDisabled: false,
                 winMoney: [],
                 totalBetMoney: "",
                 totalWinMoney: "",
                 wallet: "",
+                accountStatus: "",
             },
             mounted() {
+                this.checkStatus();
                 this.getMoney();
             },
             computed: {
-                // 計算下注後餘額
+                // 計算下注後餘額 BUG: 開獎後計算值會有誤 以及未登入時出現NaN
                 nowTotalMoney: function() {
                     return this.wallet - this.totalBetMoney;
                 }
@@ -223,13 +274,12 @@ if (is_null($member)) {
                                 _this.barD = barView[3];
 
                                 _this.getMoney(); // 每次遊戲結束後 更新會員目前餘額
+                                _this.goBtn = true; // 下一次遊玩 須重新下注 => 將GO按鈕禁用
                                 // _this.clearAll() // 遊戲結束後 初始化
                             }).catch(function (error){
                                 alert(error);
                             });
                     }
-                    
-                    
                 },
                 clearAll() {
                     this.betList = [];
@@ -294,7 +344,7 @@ if (is_null($member)) {
                     }
                 },
                 betrecord() {
-                    window.location.replace('/apis/user/betrecord');
+                    // window.location.replace('/apis/user/betrecord');
                 },
                 getMoney() {
                     // 遊戲開始前 結束後 都需要取得會員目前餘額
@@ -305,6 +355,35 @@ if (is_null($member)) {
                     axios.post('/apis/ajax/game', formData)
                         .then(function (response) {
                             _this.wallet = response.data;
+                        }).catch(function (error){
+                            alert(error);
+                        });
+                },
+                checkStatus() {
+                    // 檢查玩家狀態 被停權則無法進行遊戲
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'checkStatus');
+                    formData.append('value', 'none');
+                    axios.post('/apis/ajax/game', formData)
+                        .then(function (response) {
+                            if (response.data == 'lock') {
+                                alert('此帳號已被停權，暫時無法下注');
+                                _this.editDisabled = true;
+                                _this.goBtn = true;
+                                _this.resetDisabled = true;
+                                _this.accountStatus = "帳號狀態：停權(無法下注)";
+                            } else if (response.data == 'on') {
+                                _this.editDisabled = false;
+                                _this.goBtn = true;
+                                _this.resetDisabled = false;
+                                _this.accountStatus = "帳號狀態：啟用(可以下注)";
+                            } else if (response.data == '未登入') {
+                                _this.editDisabled = true;
+                                _this.goBtn = true;
+                                _this.resetDisabled = true;
+                                _this.accountStatus = "帳號狀態：未登入(無法下注)";
+                            }
                         }).catch(function (error){
                             alert(error);
                         });

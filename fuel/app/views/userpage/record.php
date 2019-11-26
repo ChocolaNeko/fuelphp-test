@@ -23,7 +23,7 @@ if (is_null($admin) && !is_null($member)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Member Record</title>
+    <title><?php echo "會員 " . $memberRecord . " 交易紀錄"; ?></title>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -31,8 +31,7 @@ if (is_null($admin) && !is_null($member)) {
 </head>
 <body>
     <div id="record">
-        <h1>Member Record</h1>
-        <hr>
+        <br>
         <h5>會員 <?php echo $memberRecord; ?> 交易紀錄</h5>
         <br>
         <button v-on:click="backList">返回會員清單</button>

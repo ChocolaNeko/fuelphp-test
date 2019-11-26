@@ -8,7 +8,7 @@ use Fuel\Core\Session;
 
 class Controller_Apis_Ajax extends Controller_Rest
 {
-    public function post_regs() 
+    public function post_regs()
     {
         $userAcc = $_POST['account'];
         $userPwd = $_POST['password'];
@@ -52,7 +52,7 @@ class Controller_Apis_Ajax extends Controller_Rest
 
     public function post_login()
     {
-        // echo "OK";    
+        // echo "OK";
         $logAcc = $_POST['account'];
         $logPwd = $_POST['password'];
 
@@ -63,7 +63,7 @@ class Controller_Apis_Ajax extends Controller_Rest
             // acc OK, check password
             $sql = DB::select('password')->from('members')->where('account', '=', $logAcc)->execute();
             $result_array = $sql->as_array();
-            if(password_verify($logPwd, $result_array[0]['password'])) {
+            if (password_verify($logPwd, $result_array[0]['password'])) {
                 if ($logAcc == 'admin') {
                     Session::set('admin', $logAcc);
                     echo "memberlist";
@@ -123,13 +123,25 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo "舊密碼錯誤，密碼修改失敗";
                 }
                 break;
+            case 'getRecord':
+                // 於會員頁面 取得消費紀錄
+                $nowAcc = Session::get('member');
+                $record = DB::select('*')->from('money_record')->where('account', '=', $nowAcc)->execute()->as_array();
+                echo json_encode($record);
+                break;
+            case 'getBetRecord':
+                // 於會員頁面 取得下注紀錄
+                $nowAcc = Session::get('member');
+                $betRecord = DB::select('*')->from('bet_record')->where('account', '=', $nowAcc)->execute()->as_array();
+                echo json_encode($betRecord);
+                break;
             default:
-                echo "登出失敗";
+                echo "POST ERROR";
                 break;
         }
     }
 
-    public function post_memberlist() 
+    public function post_memberlist()
     {
         $flag = $_POST['flag'];
         $value = $_POST['value'];
@@ -189,7 +201,6 @@ class Controller_Apis_Ajax extends Controller_Rest
                     } else {
                         echo "扣款失敗";
                     }
-
                 } else {
                     // 原有<欲扣 => 不可扣
                     echo "扣款失敗(扣除金額不得小於原有金額)";
@@ -199,6 +210,11 @@ class Controller_Apis_Ajax extends Controller_Rest
                 // 新增一個session 用來導到交易紀錄頁面 呈現指定會員交易紀錄
                 Session::set('record', $value);
                 echo "/apis/user/record";
+                break;
+            case 'betRecord':
+                // 新增一個session 用來導到下注紀錄頁面 呈現指定會員交易紀錄
+                Session::set('betRecord', $value);
+                echo "/apis/user/betrecord";
                 break;
             default:
                 echo "POST ERROR";
@@ -220,8 +236,41 @@ class Controller_Apis_Ajax extends Controller_Rest
             case 'getRecord':
                 // 取得指定會員交易紀錄
                 $memberRecord = Session::get('record');
-                // SELECT * FROM `money_record`
-                $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->order_by('update_time','desc')->execute()->as_array();
+                $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->order_by('update_time', 'desc')->execute()->as_array();
+                echo json_encode($sql);
+                break;
+            default:
+                echo "POST ERROR";
+                break;
+        }
+    }
+
+    public function post_betrecord()
+    {
+        $flag = $_POST['flag'];
+        $value = $_POST['value'];
+
+        switch ($flag) {
+            case 'backList':
+                // 將session清除 導回會員清單頁面
+                Session::delete('memberBetRecord');
+                echo "/apis/user/memberlist";
+                break;
+            case 'showBetRecord':
+                $memberBetRecord = Session::get('betRecord');
+                $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->order_by('bet_time', 'desc')->execute()->as_array();
+
+                foreach ($sql as $key => $value) {
+                    $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
+                    $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                    $num = $sql[$key]['bet_serial_num']; // 取得編號
+                    $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                    // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                    $serialNum = $ymd[0] . $num;
+                    $sql[$key]['serialNum'] = $serialNum;
+                }
                 echo json_encode($sql);
                 break;
             default:
@@ -238,7 +287,7 @@ class Controller_Apis_Ajax extends Controller_Rest
 
         switch ($flag) {
             case 'go':
-                /* --- RNG產生4個值 組成拉霸盤面(一組陣列) --- */
+                /* --- RNG產生4個值 組成拉霸盤面(一組陣列) 存到$result內 --- */
                 $result = [];
                 array_push($result, $barList[rand(0, 5)]);
                 array_push($result, $barList[rand(0, 5)]);
@@ -252,25 +301,25 @@ class Controller_Apis_Ajax extends Controller_Rest
                 $countStar = 0;
                 $countBarList = array_count_values($result);
                 // 計算B數 (不考慮*出現位置)
-                if (isset($countBarList['B'])){
+                if (isset($countBarList['B'])) {
                     $countB = $countBarList['B'];
                 } else {
                     $countB = 0;
                 }
                 // 計算I數 (不考慮*出現位置)
-                if (isset($countBarList['I'])){
+                if (isset($countBarList['I'])) {
                     $countI = $countBarList['I'];
                 } else {
                     $countI = 0;
                 }
                 // 計算N數 (不考慮*出現位置)
-                if (isset($countBarList['N'])){
+                if (isset($countBarList['N'])) {
                     $countN = $countBarList['N'];
                 } else {
                     $countN = 0;
                 }
                 // 計算*數 (不考慮*出現位置)
-                if (isset($countBarList['*'])){
+                if (isset($countBarList['*'])) {
                     $countStar = $countBarList['*'];
                 } else {
                     $countStar = 0;
@@ -298,7 +347,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                 $winList = [];
                 switch ($countB) {
                     case 0:
-                        array_push($winList, '0B'); 
+                        array_push($winList, '0B');
                         break;
                     case 1:
                         array_push($winList, '1B');
@@ -362,16 +411,16 @@ class Controller_Apis_Ajax extends Controller_Rest
                     }
                 }
 
-                /* ----- 判斷是否中獎 ----- */
+                /* ----- 判斷是否中獎  ----- */
                 $betResult = "未中獎";
                 for ($i = 0; $i < count($betPosition); $i++) {
-                    if ($betPosition[$i] === $moneyBack[$i]) {
+                    if (($betPosition[$i] === $moneyBack[$i]) && $betPosition[$i] != "" && $moneyBack[$i] != "") {
                         $betResult = "中獎";
                     }
                 }
 
                 /* ----- 回傳此次下注中獎獎金 ----- */
-                $rate = [20, 12, 4, 12, 20, 30, 50, 50, 100];
+                $rate = [20, 12, 4, 12, 20, 30, 50, 50, 100]; // 賠率
                 for ($i = 0; $i < count($betMoney); $i++) {
                     if ($moneyBack[$i] != '') {
                         $betMoney[$i] = $betMoney[$i] * $rate[$i];
@@ -380,7 +429,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                         }
                         $betMoney[$i] = (string)$betMoney[$i];
                     } else {
-                        if ($bonus != 'YES'){
+                        if ($bonus != 'YES') {
                             $betMoney[$i] = "0";
                         }
                     }
@@ -395,14 +444,15 @@ class Controller_Apis_Ajax extends Controller_Rest
                 file_put_contents($file, $current);
 
                 DB::start_transaction(); // 啟動MYSQL交易機制
-                $msg = ""; // 設定回傳訊息
+                $msg = "OK"; // 設定回傳訊息
 
                 /* ----- 先扣錢 並寫一筆交易紀錄 註明為 下注扣款 ----- */
-                // 取得原本金額 再減去下注總金額($totalBetMoney)
+                // 取得原本金額($getPrevMoney) 再減去下注總金額($totalBetMoney)
                 $nowMember = Session::get('member');
                 $getPrevMoney = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
                 if ($totalBetMoney > $getPrevMoney[0]['money']) {
-                    $msg = "餘額不足，此次交易失敗";
+                    $msg = "交易失敗，ERRCODE:餘額不足";
+                    DB::rollback_transaction(); // 交易失敗 rollback
                 } else {
                     $updateMoney = DB::update('members')->value('money', $getPrevMoney[0]['money'] - $totalBetMoney)->where('account', '=', $nowMember);
                     if ($updateMoney->execute()) {
@@ -413,19 +463,23 @@ class Controller_Apis_Ajax extends Controller_Rest
                             $nowMember, $totalBetMoney, $getPrevMoney[0]['money'] - $totalBetMoney, '下注扣款', 'bet'
                         ))->execute();
                     } else {
-                        $msg = "交易失敗-扣款";
+                        $msg = "交易失敗，ERRCODE:下注扣款SQL執行錯誤";
                         DB::rollback_transaction(); // 交易失敗 rollback
                     }
                 }
 
+                sleep(1); // 下注扣款 與 寫入開獎結果+中獎交易紀錄 之間 間隔幾秒 (方便紀錄)
+
                 /* ----- 開獎後 寫一筆下注紀錄 包含此次下注注項 下注結果(中獎/未中獎) ｜ 若有中獎 寫一筆交易紀錄 並加錢 ----- */
+                $winOrLose = $totalReward - $totalBetMoney; // 盈虧金額
                 $betRecord = DB::insert('bet_record')->columns(array(
-                    'account', 'bet_list', 'bet_result', 'bet_desc'  // bet_desc 放此次中獎注項
+                    // 帳號 - 開獎結果 - 下注組合 - 下注總金額 - 中獎(派彩)金額 - 盈虧金額 - 下注結果
+                    'account', 'win_list', 'bet_list', 'total_bet_money', 'total_reward', 'total_win_money', 'bet_result'
                 ))->values(array(
-                    $nowMember, json_encode($betPosition), $betResult, json_encode($moneyBack)
+                    $nowMember, json_encode($winList), json_encode($betPosition), $totalBetMoney, $totalReward, $winOrLose, $betResult
                 ));
                 if ($betRecord->execute()) {
-                    // 下注紀錄儲存成功 => 判斷是否中獎 
+                    // 下注紀錄儲存成功 => 判斷是否中獎
                     if ($betResult == "中獎") {
                         // 中獎 => 加錢 並寫一筆交易紀錄
                         $getPrevMoney = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
@@ -438,27 +492,42 @@ class Controller_Apis_Ajax extends Controller_Rest
                                 $nowMember, $totalReward, $getPrevMoney[0]['money'] + $totalReward, '下注獲利', 'win'
                             ))->execute();
                         } else {
-                            $msg = "交易失敗-獲利寫入";
+                            $msg = "交易失敗，ERRCODE:獲利寫入SQL執行錯誤";
                             DB::rollback_transaction(); // 交易失敗 rollback
                         }
                     }
-                    // 下注 扣錢(更新會員金額 寫入交易紀錄) => 開獎(寫入下注紀錄 中獎時 更新會員金額與寫入交易紀錄) 
+                    // 下注 扣錢(更新會員金額 寫入交易紀錄) => 開獎(寫入下注紀錄 中獎時 更新會員金額與寫入交易紀錄)
                     // 上述動作完成後 做最後commit 完成MYSQL交易機制
-                    DB::commit_transaction(); 
+                    DB::commit_transaction();
                 } else {
-                    $msg = "下注紀錄儲存失敗";
+                    $msg = "交易失敗，ERRCODE:下注紀錄寫入SQL執行錯誤";
                     DB::rollback_transaction(); // 交易失敗 rollback
                 }
                 // 回傳 BINS - 拉霸盤面(一組陣列) - 中獎注項(一組陣列) - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS
-                echo $betResult . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $msg;
+                echo $betResult . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus . " - " . $msg;
                 break;
 
             case 'getMoney':
                 $nowMember = Session::get('member');
-                $sql = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
-                echo $sql[0]['money'];
+                // 檢查session是否存在(是否為登入狀態)
+                if (is_null($nowMember)) {
+                    echo "登入後查詢";
+                } else {
+                    $sql = DB::select('money')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
+                    echo $sql[0]['money'];
+                }
                 break;
-
+            
+            case 'checkStatus':
+                // 檢查玩家狀態 被停權無法進行遊戲
+                $nowMember = Session::get('member');
+                if (is_null($nowMember)) {
+                    echo "未登入";
+                } else {
+                    $sql = DB::select('status')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
+                    echo $sql[0]['status'];
+                }
+                break;
             default:
                 echo "POST ERROR";
                 break;
