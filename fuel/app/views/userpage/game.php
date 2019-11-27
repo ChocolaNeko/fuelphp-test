@@ -2,9 +2,10 @@
 use Fuel\Core\Session;
 
 $member = Session::get('member');
-if (is_null($member)) {
-    // echo "請登入";
-    // header('Location: /apis/user/login');
+$admin = Session::get('admin');
+if (!is_null($admin)) {
+    // 拉霸機頁面只讓一般會員進入 管理員無法進入
+    header('Location: /apis/user/home');
 }
 
 ?>
@@ -15,50 +16,108 @@ if (is_null($member)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Game</title>
+    <title>拉霸機</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     
+    <style>
+        @-webkit-keyframes flip-horizontal-bottom {
+            0% {
+                -webkit-transform: rotateX(0);
+                transform: rotateX(0);
+            }
+            25% {
+                -webkit-transform: rotateX(90deg);
+                transform: rotateX(90deg);
+            }
+            50% {
+                -webkit-transform: rotateX(180deg);
+                transform: rotateX(180deg);
+            }
+            75% {
+                -webkit-transform: rotateX(270deg);
+                transform: rotateX(270deg);
+            }
+            100% {
+                -webkit-transform: rotateX(0);
+                transform: rotateX(0);
+            }
+        }
+        @keyframes flip-horizontal-bottom {
+            0% {
+                -webkit-transform: rotateX(0);
+                transform: rotateX(0);
+            }
+            25% {
+                -webkit-transform: rotateX(90deg);
+                transform: rotateX(90deg);
+            }
+            50% {
+                -webkit-transform: rotateX(180deg);
+                transform: rotateX(180deg);
+            }
+            75% {
+                -webkit-transform: rotateX(270deg);
+                transform: rotateX(270deg);
+            }
+            100% {
+                -webkit-transform: rotateX(0);
+                transform: rotateX(0);
+            }
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/apis/user/home">Home</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/login">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/reg">Registration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/game">Slot Game</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/memberinfo">Member Page</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/memberlist">Member List</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-    <br>
-    <h1>Slot Game</h1>
-    <hr>
-    
     <div id="bar">
+        <!-- 頁面上方 navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/apis/user/home">Home</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/apis/user/game">拉霸機</a>
+                    </li>
+                    <!-- 以一般會員登入 才顯示會員資料頁面連結 -->
+                    <li class="nav-item" v-if="isLogin">
+                        <a class="nav-link" href="/apis/user/memberinfo">會員資料</a>
+                    </li>
+                    <!-- 以管理員登入 才顯示後台管理頁面連結 -->
+                    <li class="nav-item" v-if="isAdmin">
+                        <a class="nav-link" href="/apis/user/memberlist">會員管理(管理員後台)</a>
+                    </li>
+                </ul>
+                <!-- 未登入顯示 登入 與 註冊帳號 -->
+                <ul class="navbar-nav ml-auto" v-if="!isLogin">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/apis/user/login">登入</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/apis/user/reg">註冊帳號</a>
+                    </li>
+                </ul>
+                <!-- 已登入顯示 登出 -->
+                <ul class="navbar-nav ml-auto" v-if="isLogin">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" v-on:click="logout">登出</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- 頁面內容 -->
+        <br>
+        <h1>BBIN 拉霸機</h1>
+        <hr>
         <?php echo "歡迎 " . $member; ?>
         , {{ accountStatus }}
         , 錢包餘額：
-        <label for="">{{ nowTotalMoney }}</label>
+        <label for="">{{ wallet }}</label>
         <br><br>
         <!-- 操作說明區 -->
         <div class="accordion" id="gameIntroduce">
@@ -87,21 +146,21 @@ if (is_null($member)) {
             </div>
         </div>
         
-        <br><br>
+        <br>
         <button class="btn btn-primary" v-on:click="go" v-bind:disabled="goBtn">GO!</button>
         <br><br>
         <table class="table table-bordered">
             <tr>
-                <th class="text-center"> {{ barA }} </th>
-                <th class="text-center"> {{ barB }} </th>
-                <th class="text-center"> {{ barC }} </th>
-                <th class="text-center"> {{ barD }} </th>
+                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barA }} </th>
+                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barB }} </th>
+                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barC }} </th>
+                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barD }} </th>
             </tr>
         </table>
-        <br>
+
         <label for="">{{ msg }}</label>
         <br>
-        <label for="">BINS - 拉霸盤面 - 中獎注項 - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS</label>
+        <label for="">是否中獎 - 拉霸盤面 - 中獎注項 - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS - SQL儲存狀況</label>
         <br>
         <label for="">{{ result }}</label>
         <br>
@@ -150,9 +209,6 @@ if (is_null($member)) {
             </tr>
         </table>
         <hr>
-        <!-- 下注後餘額：
-        <label for="">{{ nowTotalMoney }}</label>
-        <br><br> -->
         <table class="table-bordered w-75">
             <tr>
                 <th class="text-center"></th>
@@ -194,8 +250,6 @@ if (is_null($member)) {
                 <th class="text-center"><label>{{ totalWinMoney }}</label></th>
             </tr>
         </table>
-        <hr>
-        <button class="btn btn-primary" v-on:click="betrecord">查看下注紀錄</button>
     </div>
 
     <script>
@@ -226,33 +280,44 @@ if (is_null($member)) {
                 totalWinMoney: "",
                 wallet: "",
                 accountStatus: "",
+                isLogin: false,
+                isAdmin: false,
+                aniKeyframe: "",
             },
             mounted() {
                 this.checkStatus();
                 this.getMoney();
             },
-            computed: {
-                // 計算下注後餘額 BUG: 開獎後計算值會有誤 以及未登入時出現NaN
-                nowTotalMoney: function() {
-                    return this.wallet - this.totalBetMoney;
-                }
-            },
             methods: {
                 go() {
-                    this.getMoney(); // 開始前再次確認餘額
-                    if (this.wallet - this.totalBetMoney < 0) {
-                        alert("投注金額超過目前餘額，請重新下注");
-                        this.clearAll();
-                    } else {
-                        let _this = this;
-                        let formData = new FormData();
-                        formData.append('flag', 'go');
-                        formData.append('value', this.betList);
-                        axios.post('/apis/ajax/game', formData)
-                            .then(function (response) {
-                                _this.result = response.data;
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'go');
+                    formData.append('value', this.betList);
+                    axios.post('/apis/ajax/game', formData)
+                        .then(function (response) {
+                            _this.result = response.data;
 
-                                let temp = _this.result.split('-');
+                            let temp = _this.result.split('-');
+                                
+                            /* 顯示拉霸盤面 */ 
+                            let barView = temp[1];
+                            barView = barView.replace(/[[]/gm,"");
+                            barView = barView.replace(/["]]/gm,"");
+                            barView = barView.replace(/["]/gm,"");
+                            barView = barView.split(',');
+
+                            // 啟動拉霸動畫效果 (原地翻轉 0.5 * 10 = 5sec)
+                            _this.aniKeyframe = "flip-horizontal-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) 10 both";
+
+                            // 拉霸盤面 與 派彩結果 直到動畫結束才顯示(5sec)
+                            setTimeout(function () {
+                                // 顯示拉霸盤面
+                                _this.barA = barView[0];
+                                _this.barB = barView[1];
+                                _this.barC = barView[2];
+                                _this.barD = barView[3];
+
                                 // 顯示派彩結果與派彩總金額
                                 _this.winMoney = temp[4];
                                 _this.winMoney = _this.winMoney.replace(/[[]/gm,"");
@@ -262,24 +327,14 @@ if (is_null($member)) {
                                 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
                                 _this.totalWinMoney = _this.winMoney.reduce(reducer);
 
-                                // 顯示拉霸盤面
-                                let barView = temp[1];
-                                barView = barView.replace(/[[]/gm,"");
-                                barView = barView.replace(/["]]/gm,"");
-                                barView = barView.replace(/["]/gm,"");
-                                barView = barView.split(',');
-                                _this.barA = barView[0];
-                                _this.barB = barView[1];
-                                _this.barC = barView[2];
-                                _this.barD = barView[3];
-
-                                _this.getMoney(); // 每次遊戲結束後 更新會員目前餘額
-                                _this.goBtn = true; // 下一次遊玩 須重新下注 => 將GO按鈕禁用
-                                // _this.clearAll() // 遊戲結束後 初始化
-                            }).catch(function (error){
-                                alert(error);
-                            });
-                    }
+                                _this.aniKeyframe = ""; // 動畫效果結束 移除Keyframe
+                                _this.getMoney(); // 完成開獎 更新會員目前餘額
+                            }, 5000);
+                                
+                            _this.goBtn = true; // 下一次遊玩 須重新下注 => 將GO按鈕禁用
+                        }).catch(function (error){
+                            alert(error);
+                        });
                 },
                 clearAll() {
                     this.betList = [];
@@ -302,6 +357,7 @@ if (is_null($member)) {
                     this.barC = "I";
                     this.barD = "N";
                     this.result = [];
+                    this.getMoney();
                 },
                 saveAll() {
                     // if (this.betA == "" && this.betB == "" && this.betC == "" && this.betD == "" && this.betE == "" && this.betF == "" && this.betG == "" && this.betH == "" && this.betI == "") {
@@ -332,19 +388,17 @@ if (is_null($member)) {
                             // 計算投注總金額
                             const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
                             this.totalBetMoney = this.betList.reduce(reducer);
-                            if (this.nowTotalMoney < 0) {
+                            if (this.wallet - this.totalBetMoney < 0) {
                                 alert("投注金額超過目前餘額，請重新下注");
                                 this.clearAll();
                             } else {
                                 this.editDisabled = true;
                                 this.goBtn = false;
+                                this.wallet = this.wallet - this.totalBetMoney;
                             }
                             
                         }
                     }
-                },
-                betrecord() {
-                    // window.location.replace('/apis/user/betrecord');
                 },
                 getMoney() {
                     // 遊戲開始前 結束後 都需要取得會員目前餘額
@@ -372,19 +426,41 @@ if (is_null($member)) {
                                 _this.editDisabled = true;
                                 _this.goBtn = true;
                                 _this.resetDisabled = true;
+                                _this.isLogin = true;
+                                _this.isAdmin = false;
                                 _this.accountStatus = "帳號狀態：停權(無法下注)";
                             } else if (response.data == 'on') {
                                 _this.editDisabled = false;
                                 _this.goBtn = true;
                                 _this.resetDisabled = false;
+                                _this.isLogin = true;
+                                _this.isAdmin = false;
                                 _this.accountStatus = "帳號狀態：啟用(可以下注)";
                             } else if (response.data == '未登入') {
                                 _this.editDisabled = true;
                                 _this.goBtn = true;
                                 _this.resetDisabled = true;
+                                _this.isLogin = false;
+                                _this.isAdmin = false;
                                 _this.accountStatus = "帳號狀態：未登入(無法下注)";
                             }
                         }).catch(function (error){
+                            alert(error);
+                        });
+                },
+                logout() {
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'logout');
+                    formData.append('value', 'none');
+                    axios.post('/apis/ajax/game', formData)
+                        .then(function (response) {
+                            // _this.result = response.data;
+                            alert('登出成功');
+                            _this.isLogin = false;
+                            _this.isAdmin = false;
+                            window.location.reload(true);
+                        }).catch(function (error) {
                             alert(error);
                         });
                 }

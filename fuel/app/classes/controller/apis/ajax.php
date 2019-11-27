@@ -8,6 +8,35 @@ use Fuel\Core\Session;
 
 class Controller_Apis_Ajax extends Controller_Rest
 {
+    public function post_home()
+    {
+        $flag = $_POST['flag'];
+        $value = $_POST['value'];
+
+        $admin = Session::get('admin');
+        $member = Session::get('member');
+
+        switch ($flag) {
+            case 'checkLogin':
+                if (isset($admin)) {
+                    echo $admin;
+                } elseif (isset($member)) {
+                    echo $member;
+                } else {
+                    echo "no";
+                }
+                break;
+            
+            case 'logout':
+                Session::destroy();
+                echo "logout";
+                break;
+            default:
+                echo "POST ERROR";
+                break;
+        }
+    }
+
     public function post_regs()
     {
         $userAcc = $_POST['account'];
@@ -133,6 +162,19 @@ class Controller_Apis_Ajax extends Controller_Rest
                 // 於會員頁面 取得下注紀錄
                 $nowAcc = Session::get('member');
                 $betRecord = DB::select('*')->from('bet_record')->where('account', '=', $nowAcc)->execute()->as_array();
+
+                // 透過 下注時間 與 自動遞增的PK 組成注單編號
+                foreach ($betRecord as $key => $value) {
+                    $ymd = explode(" ", $betRecord[$key]['bet_time']); // 取得年月日
+                    $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                    $num = $betRecord[$key]['bet_serial_num']; // 取得編號
+                    $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                    // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                    $serialNum = $ymd[0] . $num;
+                    $betRecord[$key]['serialNum'] = $serialNum;
+                }
                 echo json_encode($betRecord);
                 break;
             default:
@@ -260,6 +302,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                 $memberBetRecord = Session::get('betRecord');
                 $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->order_by('bet_time', 'desc')->execute()->as_array();
 
+                // 透過 下注時間 與 自動遞增的PK 組成注單編號
                 foreach ($sql as $key => $value) {
                     $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
                     $ymd[0] = str_replace("-", "", $ymd[0]);
@@ -527,6 +570,10 @@ class Controller_Apis_Ajax extends Controller_Rest
                     $sql = DB::select('status')->from('members')->where('account', '=', $nowMember)->execute()->as_array();
                     echo $sql[0]['status'];
                 }
+                break;
+
+            case 'logout':
+                Session::destroy();
                 break;
             default:
                 echo "POST ERROR";

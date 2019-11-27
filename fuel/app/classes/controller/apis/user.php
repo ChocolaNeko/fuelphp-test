@@ -4,15 +4,6 @@ use Fuel\Core\Validation;
 
 class Controller_Apis_User extends Controller
 {
-    public function action_home()
-    {
-        // The data parameter only accepts objects and arrays.
-        $userInfo = array();
-        $userInfo['loadTime'] = date('l jS \of F Y h:i:s A');
-        // var_dump($userInfo);
-        return View::forge('userpage/home', $userInfo);
-    }
-    
     public function action_newhome()
     {
         // create view
@@ -41,48 +32,56 @@ class Controller_Apis_User extends Controller
         return $view;
     }
 
+    /* localhost/apis/user/home 所回傳的View => home (首頁) */
+    public function action_home()
+    {
+        $userInfo = array();
+        $userInfo['loadTime'] = date('l jS \of F Y h:i:s A');
+        return View::forge('userpage/home', $userInfo);
+    }
+
+    /* localhost/apis/user/memberlist 所回傳的View => memberlist (管理員後台 - 會員管理) */
     public function action_memberlist()
     {
-        // pass database data to view 'profile'
-        // $user = Model_Userdata::find_all();
-        // $data = array();
-        // $data['members'] = $user;
         return View::forge('userpage/memberlist');
     }
     
+    /* localhost/apis/user/reg 所回傳的View => reg (註冊帳號) */
     public function action_reg()
     {
-        // 此function單純顯示(回傳)註冊頁面
-        // 註冊資訊傳遞 參考 /apis/ajax.php
         return View::forge('userpage/reg');
     }
 
+    /* localhost/apis/user/login 所回傳的View => login (登入) */
     public function action_login()
     {
-        // 顯示登入頁面
         return View::forge('userpage/login');
     }
 
+    /* localhost/apis/user/memberinfo 所回傳的View => memberinfo (會員資料) */
     public function action_memberinfo()
     {
         return View::forge('userpage/memberinfo');
     }
 
+    /* localhost/apis/user/game 所回傳的View => game (拉霸機) */
     public function action_game()
     {
         return View::forge('userpage/game');
     }
 
-    public function action_setting()
-    {
-        return Response::forge(View::forge('userpage/setting'));
-    }
+    // public function action_setting()
+    // {
+    //     return Response::forge(View::forge('userpage/setting'));
+    // }
     
+    /* localhost/apis/user/record 所回傳的View => record (管理員查看會員交易紀錄) */
     public function action_record()
     {
         return View::forge('userpage/record');
     }
 
+    /* localhost/apis/user/betrecord 所回傳的View => betrecord (管理員查看會員下注紀錄) */
     public function action_betrecord()
     {
         return View::forge('userpage/betrecord');

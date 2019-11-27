@@ -17,48 +17,43 @@ if (is_null($admin)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>管理員後台 - 會員管理</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/apis/user/home">Home</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/login">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/reg">Registration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/game">Slot Game</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/memberinfo">Member Page</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/apis/user/memberlist">Member List</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-    <br>
-    <!-- 載入時用vfor刷出資料(ajax) -->
-    <h2>會員管理頁面</h2>
-    <hr>
-    <h5>歡迎管理員 <?php echo $admin; ?></h5>
-    <br>
     <div id="controll">
-        <button v-on:click="logout">管理員登出</button>
+        <!-- 頁面上方 navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/apis/user/home">Home</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <!-- 以管理員登入 才顯示後台管理 -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/apis/user/memberlist">會員管理(管理員後台)</a>
+                    </li>
+                </ul>
+                <!-- 已登入顯示 登出 -->
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" v-on:click="logout">登出</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- 頁面內容 -->
+        <br>
+        <h2>會員管理</h2>
         <hr>
-
+        <h5>歡迎管理員 <?php echo $admin; ?></h5>
+        <br><br>
+        <!-- 載入時用vfor刷出資料(ajax) -->
         <table class="table table-bordered">
             <tr>
                 <th>Id</th>

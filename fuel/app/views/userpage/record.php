@@ -24,6 +24,7 @@ if (is_null($admin) && !is_null($member)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title><?php echo "會員 " . $memberRecord . " 交易紀錄"; ?></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -31,12 +32,23 @@ if (is_null($admin) && !is_null($member)) {
 </head>
 <body>
     <div id="record">
-        <br>
-        <h5>會員 <?php echo $memberRecord; ?> 交易紀錄</h5>
-        <br>
-        <button v-on:click="backList">返回會員清單</button>
-        <hr>
-
+        <!-- 頁面上方 navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <label class="navbar-brand">會員 <?php echo $memberRecord; ?> 交易紀錄</label>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" v-on:click="backList">返回會員清單</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- 主要內容 -->
+        <br><br>
         <table class="table table-bordered">
             <tr>
                 <th>Id</th>
