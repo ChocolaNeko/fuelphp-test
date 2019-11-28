@@ -71,7 +71,7 @@ if (!is_null($admin)) {
             data: {
                 account: "",
                 password: "",
-                result: ""
+                result: "" // 登入後 欲跳轉的頁面路徑
             },
             methods: {
                 login() {

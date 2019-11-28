@@ -8,15 +8,19 @@ use Fuel\Core\Session;
 
 class Controller_Apis_Ajax extends Controller_Rest
 {
+    /* localhost/apis/user/home 所處理的動作 => home (首頁) */
     public function post_home()
     {
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
+        // 取得Session
         $admin = Session::get('admin');
         $member = Session::get('member');
 
         switch ($flag) {
+            // 檢查目前登入狀態
             case 'checkLogin':
                 if (isset($admin)) {
                     echo $admin;
@@ -26,7 +30,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo "no";
                 }
                 break;
-            
+            // 帳號登出 清除Session
             case 'logout':
                 Session::destroy();
                 echo "logout";
@@ -37,8 +41,10 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/reg 所處理的動作 => reg (註冊) */
     public function post_regs()
     {
+        // 取得POST的帳號密碼
         $userAcc = $_POST['account'];
         $userPwd = $_POST['password'];
 
@@ -79,31 +85,34 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/login 所處理的動作 => login (登入) */
     public function post_login()
     {
-        // echo "OK";
+        // 取得POST的帳號密碼
         $logAcc = $_POST['account'];
         $logPwd = $_POST['password'];
 
+        // 檢查帳號 是否存在
         $sql = DB::select('*')->from('members')->where('account', '=', $logAcc)->execute();
         $accIsExist = count($sql);
 
         if ($accIsExist == 1) {
-            // acc OK, check password
+            // 帳號存在 檢查密碼
             $sql = DB::select('password')->from('members')->where('account', '=', $logAcc)->execute();
             $result_array = $sql->as_array();
             if (password_verify($logPwd, $result_array[0]['password'])) {
+                // 認證通過 檢查身份 (一般會員 or 管理員)
                 if ($logAcc == 'admin') {
-                    Session::set('admin', $logAcc);
+                    Session::set('admin', $logAcc); // 管理員身份 設定Session 名稱為 admin
                     echo "memberlist";
                 } else {
-                    // 判斷帳號是否被凍結 -> 凍結則無法登入
+                    // 一般會員：判斷帳號是否被凍結 凍結則無法登入
                     $sql = DB::select('status')->from('members')->where('account', '=', $logAcc)->execute();
                     $result_array = $sql->as_array();
                     if ($result_array[0]['status'] == 'ban') {
                         echo "ban";
                     } else {
-                        Session::set('member', $logAcc);
+                        Session::set('member', $logAcc); // 一般會員 設定Session 名稱為 member
                         echo "memberinfo";
                     }
                 }
@@ -115,27 +124,31 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/memberinfo 所處理的動作 => memberinfo (會員資料) */
     public function post_memberinfo()
     {
-        // 根據post過來的動作 決定要做 登出/會員資料修改/密碼修改...等動作
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
         switch ($flag) {
+            // 登出 清除Session
             case 'logout':
                 Session::destroy();
                 echo "/apis/user/login";
                 break;
+            // 取得目前登入帳號 以及帳號基本資料
             case 'nowSession':
-                $nowSession = Session::get('member');
+                $nowSession = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
                 $sql = DB::select('account', 'money', 'status')->from('members')->where('account', '=', $nowSession)->execute();
                 $result_array = $sql->as_array();
                 echo json_encode($result_array);
                 break;
+            // 修改密碼
             case 'changePwd':
                 // check oldPwd (old: $pwd[0], new: $pwd[1])
                 $pwd = explode("|", $value);
-                $nowAcc = Session::get('member');
+                $nowAcc = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
                 $sql = DB::select('password')->from('members')->where('account', '=', $nowAcc)->execute();
                 $result_array = $sql->as_array();
                 if (password_verify($pwd[0], $result_array[0]['password'])) {
@@ -152,15 +165,15 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo "舊密碼錯誤，密碼修改失敗";
                 }
                 break;
+            // 取得交易紀錄
             case 'getRecord':
-                // 於會員頁面 取得消費紀錄
-                $nowAcc = Session::get('member');
+                $nowAcc = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
                 $record = DB::select('*')->from('money_record')->where('account', '=', $nowAcc)->execute()->as_array();
                 echo json_encode($record);
                 break;
+            // 取得下注紀錄
             case 'getBetRecord':
-                // 於會員頁面 取得下注紀錄
-                $nowAcc = Session::get('member');
+                $nowAcc = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
                 $betRecord = DB::select('*')->from('bet_record')->where('account', '=', $nowAcc)->execute()->as_array();
 
                 // 透過 下注時間 與 自動遞增的PK 組成注單編號
@@ -183,21 +196,26 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/memberlist 所處理的動作 => memberlist (管理員後台 - 會員管理) */
     public function post_memberlist()
     {
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
         switch ($flag) {
+            // 登出 清除Session
             case 'logout':
                 Session::destroy();
                 echo "/apis/user/login";
                 break;
+            // 取得所有會員資料 (排除管理員)
             case 'showMembers':
                 $sql = DB::select('id', 'account', 'money', 'status')->from('members')->where('account', '!=', 'admin')->execute();
                 $result_array = $sql->as_array();
                 echo json_encode($result_array);
                 break;
+            // 帳號凍結 鎖定 恢復啟用
             case 'accBan':
                 $sql = DB::update('members')->value('status', 'ban')->where('account', '=', $value)->execute();
                 break;
@@ -207,8 +225,9 @@ class Controller_Apis_Ajax extends Controller_Rest
             case 'accOn':
                 $sql = DB::update('members')->value('status', 'on')->where('account', '=', $value)->execute();
                 break;
+            // 加錢
             case 'addMoney':
-                $val = explode("|", $value);
+                $val = explode("|", $value); // value 以 | 隔開 前面為金額 後面為帳號名稱
                 // 取出原有金額 再 更新金額(原有+增加值)
                 $nowMoney = DB::select('money')->from('members')->where('account', '=', $val[1])->execute()->as_array();
                 $updateMoney = DB::update('members')->value('money', $nowMoney[0]['money'] + $val[0])->where('account', '=', $val[1]);
@@ -225,8 +244,9 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo "增加失敗";
                 }
                 break;
+            // 扣錢
             case 'subMoney':
-                $val = explode("|", $value);
+                $val = explode("|", $value); // value 以 | 隔開 前面為金額 後面為帳號名稱
                 // 取出原有金額 先與 扣除金額比較
                 $nowMoney = DB::select('money')->from('members')->where('account', '=', $val[1])->execute()->as_array();
                 if ($nowMoney[0]['money'] >= $val[0]) {
@@ -249,12 +269,12 @@ class Controller_Apis_Ajax extends Controller_Rest
                 }
                 break;
             case 'record':
-                // 新增一個session 用來導到交易紀錄頁面 呈現指定會員交易紀錄
+                // 新增一個session 存放會員帳號 呈現指定會員交易紀錄 並導到交易紀錄頁面 
                 Session::set('record', $value);
                 echo "/apis/user/record";
                 break;
             case 'betRecord':
-                // 新增一個session 用來導到下注紀錄頁面 呈現指定會員交易紀錄
+                // 新增一個session 存放會員帳號 呈現指定會員下注紀錄 並導到下注紀錄頁面 
                 Session::set('betRecord', $value);
                 echo "/apis/user/betrecord";
                 break;
@@ -264,19 +284,21 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/record 所處理的動作 => record (管理員查看會員交易紀錄) */
     public function post_record()
     {
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
         switch ($flag) {
+            // 返回會員管理頁面 將session清除 導回會員清單頁面
             case 'backList':
-                // 將session清除 導回會員清單頁面
                 Session::delete('record');
                 echo "/apis/user/memberlist";
                 break;
+            // 取得指定會員交易紀錄
             case 'getRecord':
-                // 取得指定會員交易紀錄
                 $memberRecord = Session::get('record');
                 $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->order_by('update_time', 'desc')->execute()->as_array();
                 echo json_encode($sql);
@@ -287,17 +309,20 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/betrecord 所處理的動作 => betrecord (管理員查看會員下注紀錄) */
     public function post_betrecord()
     {
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
         switch ($flag) {
+            // 返回會員管理頁面 將session清除 導回會員清單頁面
             case 'backList':
-                // 將session清除 導回會員清單頁面
                 Session::delete('memberBetRecord');
                 echo "/apis/user/memberlist";
                 break;
+            // 取得指定會員交易紀錄    
             case 'showBetRecord':
                 $memberBetRecord = Session::get('betRecord');
                 $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->order_by('bet_time', 'desc')->execute()->as_array();
@@ -322,13 +347,17 @@ class Controller_Apis_Ajax extends Controller_Rest
         }
     }
 
+    /* localhost/apis/user/game 所處理的動作 => game (拉霸機) */
     public function post_game()
     {
+        // 取得POST傳過來的動作(flag) 與 值(value)
         $flag = $_POST['flag'];
         $value = $_POST['value'];
+        // 拉霸各盤面會出現的值
         $barList = ["B","B","I","N","*","*"];
 
         switch ($flag) {
+            // 拉霸開獎
             case 'go':
                 /* --- RNG產生4個值 組成拉霸盤面(一組陣列) 存到$result內 --- */
                 $result = [];
@@ -546,10 +575,10 @@ class Controller_Apis_Ajax extends Controller_Rest
                     $msg = "交易失敗，ERRCODE:下注紀錄寫入SQL執行錯誤";
                     DB::rollback_transaction(); // 交易失敗 rollback
                 }
-                // 回傳 BINS - 拉霸盤面(一組陣列) - 中獎注項(一組陣列) - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS
+                // 回傳 是否中獎 - 拉霸盤面(一組陣列) - 中獎注項(一組陣列) - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS - SQL儲存狀況
                 echo $betResult . " - " . json_encode($result) . " - " . json_encode($winList) . " - " . json_encode($moneyBack) . " - " . json_encode($betMoney) . " - " . $bonus . " - " . $msg;
                 break;
-
+            // 取得會員目前餘額    
             case 'getMoney':
                 $nowMember = Session::get('member');
                 // 檢查session是否存在(是否為登入狀態)
@@ -560,9 +589,8 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo $sql[0]['money'];
                 }
                 break;
-            
+            // 檢查玩家狀態 被停權無法進行遊戲
             case 'checkStatus':
-                // 檢查玩家狀態 被停權無法進行遊戲
                 $nowMember = Session::get('member');
                 if (is_null($nowMember)) {
                     echo "未登入";
@@ -571,7 +599,7 @@ class Controller_Apis_Ajax extends Controller_Rest
                     echo $sql[0]['status'];
                 }
                 break;
-
+            // 登出 清除Session
             case 'logout':
                 Session::destroy();
                 break;

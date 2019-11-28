@@ -23,7 +23,7 @@ if (is_null($admin) && !is_null($member)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title><?php echo "會員 " . $memberRecord . " 交易紀錄"; ?></title>
+    <title><?php echo "管理員後台 - 會員 " . $memberRecord . " 交易紀錄"; ?></title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -34,7 +34,7 @@ if (is_null($admin) && !is_null($member)) {
     <div id="record">
         <!-- 頁面上方 navbar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <label class="navbar-brand">會員 <?php echo $memberRecord; ?> 交易紀錄</label>
+            <label class="navbar-brand">管理員後台 - 會員 <?php echo $memberRecord; ?> 交易紀錄</label>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -73,9 +73,10 @@ if (is_null($admin) && !is_null($member)) {
         let record = new Vue({
             el: "#record",
             data: {
-                record: [],
+                record: [], // 存放取得的所有交易紀錄
             },
             mounted: function () {
+                // 載入時取得所有交易紀錄
                 let _this = this;
                 let formData = new FormData();
                 formData.append('flag', 'getRecord');
@@ -84,13 +85,13 @@ if (is_null($admin) && !is_null($member)) {
                     .then(function (response) {
                         _this.record = response.data;
                         console.log(_this.record);
-                        // window.location.replace(response.data);
                     }).catch(function (error) {
                         alert(error);
                     });
             },
             methods: {
                 backList() {
+                    // 返回會員管理頁面
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'backList');

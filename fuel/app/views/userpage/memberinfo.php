@@ -166,7 +166,6 @@ if (is_null($member)) {
             </div>
         </div>
         <hr>
-        <!-- <button v-on:click="logout">登出</button> -->
     </div>
     
 
@@ -174,18 +173,20 @@ if (is_null($member)) {
         let msg = new Vue({
             el: "#msg",
             data: {
-                result: "",
-                userData: [],
+                result: "", // 登出後頁面導向
+                userData: [], // 使用者基本資料
                 oldPwd: "",
                 newPwd: "",
-                chPwdResult: "",
-                record: [],
+                chPwdResult: "", // 密碼修改結果回傳
+                // 取得的交易/下注紀錄
+                record: [], 
                 betRecord: [],
+                // 是否登入 及 帳號類別判斷
                 isLogin: false,
                 isAdmin: false,
             },
             mounted: function () {
-                // mounted 時 ajax 取得目前登入帳號 交易紀錄 下注紀錄
+                // 載入時 取得目前登入帳號 交易紀錄 下注紀錄
                 this.nowSession();
                 this.getRecord();
                 this.getBetRecord();
@@ -208,6 +209,7 @@ if (is_null($member)) {
                         });
                 },
                 nowSession() {
+                    // 取得目前登入帳號 以及帳號基本資料
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'nowSession');
@@ -222,6 +224,7 @@ if (is_null($member)) {
                         });
                 },
                 changePwd() {
+                    // 修改密碼
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'changePwd');
@@ -235,6 +238,7 @@ if (is_null($member)) {
                         });
                 },
                 getRecord() {
+                    // 取得交易紀錄
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'getRecord');
@@ -248,6 +252,7 @@ if (is_null($member)) {
                         });
                 },
                 getBetRecord() {
+                    // 取得下注紀錄
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'getBetRecord');

@@ -112,15 +112,23 @@ if (!is_null($admin)) {
         </nav>
         <!-- 頁面內容 -->
         <br>
-        <h1>BBIN 拉霸機</h1>
+        <h3>BBIN 拉霸機</h3>
         <hr>
-        <?php echo "歡迎 " . $member; ?>
-        , {{ accountStatus }}
-        , 錢包餘額：
+        <?php
+            if (!is_null($member)) {
+                echo "歡迎 " . $member; 
+            } else {
+                echo "歡迎 訪客"; 
+            }
+        ?>
+        <br><br>
+        {{ accountStatus }}
+        <br><br>
+        錢包餘額：
         <label for="">{{ wallet }}</label>
         <br><br>
         <!-- 操作說明區 -->
-        <div class="accordion" id="gameIntroduce">
+        <div class="accordion col-md-6" id="gameIntroduce">
             <div class="card">
                 <div class="card-header" id="first">
                     <h2>
@@ -145,27 +153,34 @@ if (!is_null($admin)) {
                 </div>
             </div>
         </div>
-        
+
+        <!-- 拉霸開始按鈕 與 盤面 -->
         <br>
         <button class="btn btn-primary" v-on:click="go" v-bind:disabled="goBtn">GO!</button>
         <br><br>
-        <table class="table table-bordered">
+        <!-- <table class="table table-bordered">
             <tr>
                 <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barA }} </th>
                 <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barB }} </th>
                 <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barC }} </th>
                 <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barD }} </th>
             </tr>
-        </table>
+        </table> -->
 
-        <label for="">{{ msg }}</label>
-        <br>
+        <div class="row">
+            <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barA }}</div>
+            <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barB }}</div>
+            <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barC }}</div>
+            <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barD }}</div>
+        </div>
+
+        <!-- 測試用訊息 -->
         <label for="">是否中獎 - 拉霸盤面 - 中獎注項 - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS - SQL儲存狀況</label>
         <br>
         <label for="">{{ result }}</label>
         <br>
-        <!-- <input type="text" id="cannotCP" onkeypress='return event.charCode >= 48 && event.charCode <= 57'> -->
-        <!-- <br><br> -->
+        
+        <!-- 重新下注(重設) 下注(鎖定注項) 及 注項賠率顯示 金額輸入區 -->
         <button class="btn btn-primary" v-on:click="clearAll" v-bind:disabled="resetDisabled">重新下注</button>
         <br><br>
         <button class="btn btn-primary" v-on:click="saveAll" v-bind:disabled="editDisabled">下注</button>
@@ -209,6 +224,8 @@ if (!is_null($admin)) {
             </tr>
         </table>
         <hr>
+
+        <!-- 各注項投注金額 及 派彩結果 顯示區 -->
         <table class="table-bordered w-75">
             <tr>
                 <th class="text-center"></th>
@@ -250,17 +267,20 @@ if (!is_null($admin)) {
                 <th class="text-center"><label>{{ totalWinMoney }}</label></th>
             </tr>
         </table>
+        <br>
     </div>
 
     <script>
         let bar = new Vue({
             el: "#bar",
             data: {
-                betList: [],
+                betList: [], // 儲存各注項投注金額
+                // barA ~ barB 為 拉霸盤面
                 barA: "B",
                 barB: "B",
                 barC: "I",
                 barD: "N",
+                // betA ~ betI 為 各注項下注金額
                 betA: "0",
                 betB: "0",
                 betC: "0",
@@ -270,25 +290,31 @@ if (!is_null($admin)) {
                 betG: "0",
                 betH: "0",
                 betI: "0",
-                result: [],
-                msg: "",
-                editDisabled : false,
-                goBtn: true,
-                resetDisabled: false,
-                winMoney: [],
+                result: [], // 結果回傳暫存
+                editDisabled : false, // 處理 下注按鈕 與 各注項金額輸入區 狀態 (按下下注按鈕後 將下注 與 金額輸入區鎖定)
+                goBtn: true, // 處理 拉霸開始按鈕 狀態 (未完成下注 無法開始拉霸) 
+                resetDisabled: false, // 處理 重新下注按鈕 狀態
+                winMoney: [], // 儲存各注項派彩結果
+                // 投注 / 派彩總金額 / 目前餘額
                 totalBetMoney: "",
                 totalWinMoney: "",
                 wallet: "",
-                accountStatus: "",
+                accountStatus: "", // 取得帳號狀態
+                // 判斷登入狀態 (未登入/一般使用者登入/管理員登入)
                 isLogin: false,
                 isAdmin: false,
-                aniKeyframe: "",
+                aniKeyframe: "", // 存放拉霸動畫效果
+                setColor: "rgb(255, 255, 255)", // 拉霸盤面顏色
+                fWeight: "bold", // 拉霸盤面字體粗細
+                randBBIN: ['B', 'B', 'I', 'N', '*', '*'],
             },
             mounted() {
+                // 進入(或重整)頁面時 取得登入與帳號狀態 以及 目前錢包餘額
                 this.checkStatus();
                 this.getMoney();
             },
             methods: {
+                // 拉霸開獎
                 go() {
                     let _this = this;
                     let formData = new FormData();
@@ -309,6 +335,20 @@ if (!is_null($admin)) {
 
                             // 啟動拉霸動畫效果 (原地翻轉 0.5 * 10 = 5sec)
                             _this.aniKeyframe = "flip-horizontal-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) 10 both";
+                            _this.setColor = "rgb(10, 227, 245)";
+
+                            // 動畫進行過程 拉霸盤面隨機生成值 
+                            let timer = 0;
+                            let interval = setInterval(function () {
+                                if (timer === 18) {
+                                    clearInterval(interval);
+                                }
+                                _this.barA = _this.randBBIN[Math.floor(Math.random() * 6)];
+                                _this.barB = _this.randBBIN[Math.floor(Math.random() * 6)];
+                                _this.barC = _this.randBBIN[Math.floor(Math.random() * 6)];
+                                _this.barD = _this.randBBIN[Math.floor(Math.random() * 6)];
+                                timer++;
+                            }, 250);
 
                             // 拉霸盤面 與 派彩結果 直到動畫結束才顯示(5sec)
                             setTimeout(function () {
@@ -317,6 +357,7 @@ if (!is_null($admin)) {
                                 _this.barB = barView[1];
                                 _this.barC = barView[2];
                                 _this.barD = barView[3];
+                                
 
                                 // 顯示派彩結果與派彩總金額
                                 _this.winMoney = temp[4];
@@ -328,6 +369,7 @@ if (!is_null($admin)) {
                                 _this.totalWinMoney = _this.winMoney.reduce(reducer);
 
                                 _this.aniKeyframe = ""; // 動畫效果結束 移除Keyframe
+                                _this.setColor = "rgb(255, 128, 128)";
                                 _this.getMoney(); // 完成開獎 更新會員目前餘額
                             }, 5000);
                                 
@@ -336,6 +378,7 @@ if (!is_null($admin)) {
                             alert(error);
                         });
                 },
+                // 重新下注： 清空下注金額 重設各欄位狀態 並再次取得目前餘額
                 clearAll() {
                     this.betList = [];
                     this.winMoney = [];
@@ -358,10 +401,13 @@ if (!is_null($admin)) {
                     this.barD = "N";
                     this.result = [];
                     this.getMoney();
+                    this.setColor = "rgb(255, 255, 255)";
                 },
+                // 鎖定下注注項
                 saveAll() {
                     // if (this.betA == "" && this.betB == "" && this.betC == "" && this.betD == "" && this.betE == "" && this.betF == "" && this.betG == "" && this.betH == "" && this.betI == "") {
                     if (this.betA + this.betB + this.betC + this.betD + this.betE + this.betF + this.betG + this.betH + this.betI <= 0) {
+                        // 下注金額總和小於或等於零 代表使用者未下注 跳出提示
                         alert('至少下一注');
                     } else {
                         this.betList.push(this.betA);
@@ -389,7 +435,7 @@ if (!is_null($admin)) {
                             const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue);
                             this.totalBetMoney = this.betList.reduce(reducer);
                             if (this.wallet - this.totalBetMoney < 0) {
-                                alert("投注金額超過目前餘額，請重新下注");
+                                alert("投注總金額超過目前餘額，請重新下注");
                                 this.clearAll();
                             } else {
                                 this.editDisabled = true;
@@ -401,7 +447,7 @@ if (!is_null($admin)) {
                     }
                 },
                 getMoney() {
-                    // 遊戲開始前 結束後 都需要取得會員目前餘額
+                    // 取得會員目前餘額
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'getMoney');

@@ -47,6 +47,7 @@ if (is_null($admin)) {
                 </ul>
             </div>
         </nav>
+
         <!-- 頁面內容 -->
         <br>
         <h2>會員管理</h2>
@@ -90,18 +91,15 @@ if (is_null($admin)) {
         let controll = new Vue({
             el: "#controll",
             data: {
-                result: "",
-                members: [],
-                id: "",
-                ban: "",
-                lock: "",
-                on: "",
-                moneyChange: ""
+                members: [], // 存放取出的會員資料
+                moneyChange: "", // 取得輸入的金額(金額調整用)
             },
             mounted: function () {
+                // 載入時 顯示所有會員資料
                 this.showMembers();
             },
             methods: {
+                // 取得所有會員資料 (排除管理員)
                 showMembers() {
                     let _this = this;
                     let formData = new FormData();
@@ -110,8 +108,6 @@ if (is_null($admin)) {
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
                             _this.members = response.data;
-                            // console.log(_this.members);
-                            // console.log(typeof _this.members);
                         }).catch(function (error) {
                             _this.members = error;
                         });
@@ -123,82 +119,71 @@ if (is_null($admin)) {
                     formData.append('value', 'none');
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
-                            _this.result = response.data;
                             alert('登出成功');
-                            // console.log(typeof _this.result);
-                            window.location.replace(_this.result);
+                            window.location.replace(response.data);
                         }).catch(function (error) {
-                            _this.result = error;
+                            alert(error);
                         });
                 },
                 accBan(val) {
-                    // set account ban (can't login)
-                    // console.log(val);
+                    // 帳號凍結 (無法登入)
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'accBan');
                     formData.append('value', val);
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
-                            _this.ban = response.data;
                             alert(`帳號 ${val} 凍結成功`);
                             _this.showMembers();
                         }).catch(function (error) {
-                            _this.ban = error;
-                            alert(_this.ban);
+                            alert(error);
                         });
                 },
                 accLock(val) {
-                    // set account lock (login OK, can't play)
-                    // console.log(val);
+                    // 帳號鎖定 (可登入 但無法玩拉霸)
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'accLock');
                     formData.append('value', val);
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
-                            _this.lock = response.data;
                             alert(`帳號 ${val} 停權成功`);
                             _this.showMembers();
                         }).catch(function (error) {
-                            _this.lock = error;
-                            alert(_this.lock);
+                            alert(error);
                         });
                 },
                 accOn(val) {
+                    // 帳號恢復啟用
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'accOn');
                     formData.append('value', val);
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
-                            _this.on = response.data;
                             alert(`帳號 ${val} 恢復啟用`);
                             _this.showMembers();
                         }).catch(function (error) {
-                            _this.on = error;
-                            alert(_this.on);
+                            alert(error);
                         });
                 },
                 addMoney(val) {
-                    // console.log(val);
+                    // 加錢
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'addMoney');
                     formData.append('value', `${this.moneyChange}|${val}`);
                     axios.post('/apis/ajax/memberlist', formData)
                         .then(function (response) {
-                            // _this.on = response.data;
                             alert(`${response.data}`);
                             _this.moneyChange = "";
                             _this.showMembers();
                         }).catch(function (error) {
-                            // _this.on = error;
                             alert(error);
                         });
                 },
                 subMoney(val) {
-                    // console.log(val);
+                    // 扣錢
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'subMoney');
@@ -213,6 +198,7 @@ if (is_null($admin)) {
                         });
                 },
                 record(val) {
+                    // 查看指定會員交易紀錄 (將帳號名稱帶入頁面)
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'record');
@@ -225,6 +211,7 @@ if (is_null($admin)) {
                         });
                 },
                 betRecord(val) {
+                    // 查看指定會員下注紀錄 (將帳號名稱帶入頁面)
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'betRecord');

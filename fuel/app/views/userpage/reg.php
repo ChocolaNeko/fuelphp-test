@@ -69,7 +69,7 @@ if (!is_null($admin)) {
             data: {
                 account: "",
                 password: "",
-                result: ""
+                result: "" // 顯示註冊結果
             },
             methods: {
                 reg() {

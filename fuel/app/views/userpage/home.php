@@ -1,3 +1,9 @@
+<?php
+    // Asset::js(array('slotmachine.js'), array(), 'slotmachine', false);
+    // Asset::add_path('assets/js/', array('js'));
+    echo Asset::js('slotmachine.js', array(), null, true);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Home</title>
+    <!-- <script src="slotmachine.js"></script> -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -108,6 +115,7 @@
         <br>
         <h4>歡迎 {{ msg }}</h4>
         <hr>
+        <!-- 拉霸動畫效果測試 -->
         拉霸動畫效果測試
         <button id="goBtn" v-on:click="go">GO</button>
         <table class="table table-bordered">
@@ -118,8 +126,100 @@
                 <th class="text-center" v-bind:style="{ animation: aniKeyframe, 'background-color': test }">{{ barD }}</th>
             </tr>
         </table>
+        <hr>
+        <!-- 拉霸測試2 -->
+        <div id="randomize">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div>
+                            <div id="machine1" class="randomizeMachine">
+                                <div>B</div>
+                                <div>B</div>
+                                <div>I</div>
+                                <div>N</div>
+                                <div>*</div>
+                                <div>*</div>
+                            </div>
+                        </div>
+                    </div>        
+                    <div class="col-sm-3">
+                        <div>
+                            <div id="machine2" class="randomizeMachine">
+                                <div>B</div>
+                                <div>B</div>
+                                <div>I</div>
+                                <div>N</div>
+                                <div>*</div>
+                                <div>*</div>
+                            </div>
+                        </div>
+                    </div>        
+                    <div class="col-sm-3">
+                        <div>
+                            <div id="machine3" class="randomizeMachine">
+                                <div>B</div>
+                                <div>B</div>
+                                <div>I</div>
+                                <div>N</div>
+                                <div>*</div>
+                                <div>*</div>
+                            </div>
+                        </div>
+                    </div>        
+                    <div class="col-sm-3">
+                        <div>
+                            <div id="machine4" class="randomizeMachine">
+                                <div>B</div>
+                                <div>B</div>
+                                <div>I</div>
+                                <div>N</div>
+                                <div>*</div>
+                                <div>*</div>
+                            </div>
+                        </div>
+                    </div>        
+                </div>
+            </div>
+        </div>
+        <hr>
+        <button id="randomizeButton" type="button" class="btn btn-danger btn-lg" v-on:click="next">Shuffle</button>
+        <div id="machine1Result" class="col-xs-3 machineResult">Index: 0</div>
+        <div id="machine2Result" class="col-xs-3 machineResult">Index: 0</div>
+        <div id="machine3Result" class="col-xs-3 machineResult">Index: 0</div>
+        <div id="machine4Result" class="col-xs-3 machineResult">Index: 0</div>
     </div>
-    
+
+    <script>
+        const btn = document.querySelector('#randomizeButton');
+        const results = {
+            machine1: document.querySelector('#machine1Result'),
+            machine2: document.querySelector('#machine2Result'),
+            machine3: document.querySelector('#machine3Result'),
+            machine4: document.querySelector('#machine4Result')
+        };
+        const el1 = document.querySelector('#machine1');
+        const el2 = document.querySelector('#machine2');
+        const el3 = document.querySelector('#machine3');
+        const el4 = document.querySelector('#machine4');
+
+        const machine1 = new SlotMachine(el1, { active: 0 });
+        const machine2 = new SlotMachine(el2, { active: 0 });
+        const machine3 = new SlotMachine(el3, { active: 0 });
+        const machine4 = new SlotMachine(el4, { active: 0 });
+
+        function onComplete(active) {
+            results[this.element.id].innerText = `Index: ${this.active}`;
+        }
+        
+        // btn.addEventListener('click', () => {
+        //     console.log("OK");
+        //     // setTimeout(() => machine2.shuffle(5, onComplete), 500);
+        //     // setTimeout(() => machine3.shuffle(5, onComplete), 1000);
+        //     // setTimeout(() => machine4.shuffle(5, onComplete), 1500);
+        // });
+    </script>
+
     <script>
         let home = new Vue({
             el: "#home",
@@ -134,12 +234,19 @@
                 msg: "",
                 aniKeyframe: "",
                 test: "gray",
-                randABC: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+                randABC: ['B', 'B', 'I', 'N', '*', '*'],
             },
             mounted() {
                 this.checkLogin();
             },
             methods: {
+                next() {
+                    console.log(machine1);
+                    machine1.shuffle(5);
+                    setTimeout(() => machine2.shuffle(5, onComplete), 500);
+                    setTimeout(() => machine3.shuffle(5, onComplete), 1000);
+                    setTimeout(() => machine4.shuffle(5, onComplete), 1500);
+                },
                 go() {
                     this.aniKeyframe = "flip-horizontal-bottom 0.5s cubic-bezier(0.455, 0.030, 0.515, 0.955) 10 both";
                     let _this = this;
@@ -148,16 +255,17 @@
                         if (timer === 9) {
                             clearInterval(interval);
                         }
-                        _this.barA = _this.randABC[Math.floor(Math.random() * 10)];
-                        _this.barB = _this.randABC[Math.floor(Math.random() * 10)];
-                        _this.barC = _this.randABC[Math.floor(Math.random() * 10)];
-                        _this.barD = _this.randABC[Math.floor(Math.random() * 10)];
+                        _this.barA = _this.randABC[Math.floor(Math.random() * 6)];
+                        _this.barB = _this.randABC[Math.floor(Math.random() * 6)];
+                        _this.barC = _this.randABC[Math.floor(Math.random() * 6)];
+                        _this.barD = _this.randABC[Math.floor(Math.random() * 6)];
+                        timer++;
                     }, 500);
                     setTimeout(function () {
-                        _this.barA = Math.floor(Math.random() * 10);
-                        _this.barB = Math.floor(Math.random() * 10);
-                        _this.barC = Math.floor(Math.random() * 10);
-                        _this.barD = Math.floor(Math.random() * 10);
+                        _this.barA = "*";
+                        _this.barB = "*";
+                        _this.barC = "*";
+                        _this.barD = "*";
                         _this.aniKeyframe = "";
                     }, 5000);
                     

@@ -70,10 +70,17 @@ class Controller_Apis_User extends Controller
         return View::forge('userpage/game');
     }
 
-    // public function action_setting()
-    // {
-    //     return Response::forge(View::forge('userpage/setting'));
-    // }
+    public function action_setting()
+    {
+        // example: google search
+        echo Form::open(array('action' => 'http://google.com/search?', 'method' => 'get'));
+        echo Form::input('q', 'value', array('style' => 'border: 3px green dotted;'));
+        echo Form::csrf();
+        echo Form::submit();
+        echo Form::close();
+        // ===============================================================================
+        return Response::forge(View::forge('userpage/setting'));
+    }
     
     /* localhost/apis/user/record 所回傳的View => record (管理員查看會員交易紀錄) */
     public function action_record()
