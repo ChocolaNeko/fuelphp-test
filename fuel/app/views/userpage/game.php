@@ -173,7 +173,7 @@ if (!is_null($admin)) {
             <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barC }}</div>
             <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barD }}</div>
         </div>
-
+        <br>
         <!-- 測試用訊息 -->
         <label for="">是否中獎 - 拉霸盤面 - 中獎注項 - 此次下注中獎注項 - 此次下注中獎金額 - 是否出現BONUS - SQL儲存狀況</label>
         <br>

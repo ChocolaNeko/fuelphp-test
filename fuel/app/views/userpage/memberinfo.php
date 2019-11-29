@@ -118,6 +118,12 @@ if (is_null($member)) {
                 <br>
                 交易紀錄
                 <br><br>
+                <button v-on:click="prevR">Prev.</button>
+                | 第 {{ countR }} 頁, 共 {{ totalPageR }} 頁 | 共 {{ totalR }} 筆資料 |
+                <button v-on:click="nextR">Next.</button>
+                每頁顯示
+                <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-model="listLengthR">
+                <hr>
                 <table class="table table-bordered">
                     <tr>
                         <th>Id</th>
@@ -128,7 +134,7 @@ if (is_null($member)) {
                         <th>交易敘述</th>
                     </tr>
                     <tr v-for="(item, index) in record" :key="index">
-                        <td>{{ index + 1 }}</td>              
+                        <td>{{ item.id }}</td>              
                         <td>{{ item.update_time }}</td>                 
                         <td>{{ item.status }}</td>           
                         <td>{{ item.update_money }}</td>
@@ -141,6 +147,12 @@ if (is_null($member)) {
                 <br>
                 下注紀錄
                 <br><br>
+                <button v-on:click="prevB">Prev.</button>
+                | 第 {{ countB }} 頁, 共 {{ totalPageB }} 頁 | 共 {{ totalB }} 筆資料 |
+                <button v-on:click="nextB">Next.</button>
+                每頁顯示
+                <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-model="listLengthB">
+                <hr>
                 <table class="table table-bordered">
                     <tr>
                         <th>下注時間</th>
@@ -184,12 +196,23 @@ if (is_null($member)) {
                 // 是否登入 及 帳號類別判斷
                 isLogin: false,
                 isAdmin: false,
+                // 交易紀錄 頁面計算
+                countR: 1, // 目前頁數
+                listLengthR: 10,  // 每頁顯示資料筆數
+                totalPageR: 0, // 總資料頁數
+                totalR: 0,  // 總資料筆數
+                // 下注紀錄 頁面計算
+                countB: 1, // 目前頁數
+                listLengthB: 10,  // 每頁顯示資料筆數
+                totalPageB: 0, // 總資料頁數
+                totalB: 0,  // 總資料筆數
             },
             mounted: function () {
                 // 載入時 取得目前登入帳號 交易紀錄 下注紀錄
                 this.nowSession();
                 this.getRecord();
                 this.getBetRecord();
+                this.getTotalRB();
             },
             methods: {
                 logout() {
@@ -242,7 +265,7 @@ if (is_null($member)) {
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'getRecord');
-                    formData.append('value', 'none');
+                    formData.append('value', this.listLengthR);
                     axios.post('/apis/ajax/memberinfo', formData)
                         .then(function (response) {
                             _this.record = response.data;
@@ -256,16 +279,98 @@ if (is_null($member)) {
                     let _this = this;
                     let formData = new FormData();
                     formData.append('flag', 'getBetRecord');
-                    formData.append('value', 'none');
+                    formData.append('value', this.listLengthB);
                     axios.post('/apis/ajax/memberinfo', formData)
                         .then(function (response) {
                             _this.betRecord = response.data;
-                            _this.betRecord.forEach(e => console.log(e.win_list));
-                            console.log("------------------------------");
-                            _this.betRecord.forEach(e => console.log(e.bet_list));
+                            // _this.betRecord.forEach(e => console.log(e.win_list));
+                            // console.log("------------------------------");
+                            // _this.betRecord.forEach(e => console.log(e.bet_list));
                         }).catch(function (error) {
                             _this.betRecord = error;
                         });
+                },
+                getTotalRB() {
+                    let _this = this;
+                    let formData = new FormData();
+                    formData.append('flag', 'getTotalRB');
+                    formData.append('value', 'none');
+                    axios.post('/apis/ajax/memberinfo', formData)
+                        .then(function (response) {
+                            let temp = response.data.split('|');
+                            _this.totalR = temp[0];
+                            _this.totalPageR = Math.ceil(_this.totalR / _this.listLengthR);
+                            _this.totalB = temp[1];
+                            _this.totalPageB = Math.ceil(_this.totalB / _this.listLengthB);
+                        }).catch(function (error) {
+                            alert(error);
+                        });
+                },
+                // 交易紀錄換頁(往前)
+                prevR() {
+                    if (this.countR > 1) {
+                        this.countR--;
+                        let _this = this;
+                        let formData = new FormData();
+                        formData.append('flag', 'spageR');
+                        formData.append('value', `${this.countR}|${this.listLengthR}`);
+                        axios.post('/apis/ajax/memberinfo', formData)
+                            .then(function (response){
+                                _this.record = response.data;
+                                // console.log(response.data);
+                            }).catch(function (error) {
+                                alert(error);
+                            });
+                    }
+                },
+                // 交易紀錄換頁(往後)
+                nextR() {
+                    if (this.countR < this.totalPageR) {
+                        this.countR++;
+                        let _this = this;
+                        let formData = new FormData();
+                        formData.append('flag', 'spageR');
+                        formData.append('value', `${this.countR}|${this.listLengthR}`);
+                        axios.post('/apis/ajax/memberinfo', formData)
+                            .then(function (response){
+                                _this.record = response.data;
+                                // console.log(response.data);
+                            }).catch(function (error) {
+                                alert(error);
+                            });
+                    }
+                },
+                prevB() {
+                    if (this.countB > 1) {
+                        this.countB--;
+                        let _this = this;
+                        let formData = new FormData();
+                        formData.append('flag', 'spageB');
+                        formData.append('value', `${this.countB}|${this.listLengthB}`);
+                        axios.post('/apis/ajax/memberinfo', formData)
+                            .then(function (response){
+                                _this.betRecord = response.data;
+                                // console.log(response.data);
+                            }).catch(function (error) {
+                                alert(error);
+                            });
+                    }
+                },
+                nextB() {
+                    if (this.countB < this.totalPageB) {
+                        this.countB++;
+                        let _this = this;
+                        let formData = new FormData();
+                        formData.append('flag', 'spageB');
+                        formData.append('value', `${this.countB}|${this.listLengthB}`);
+                        axios.post('/apis/ajax/memberinfo', formData)
+                            .then(function (response){
+                                _this.betRecord = response.data;
+                                // console.log(response.data);
+                            }).catch(function (error) {
+                                alert(error);
+                            });
+                    }
                 }
             },
         })

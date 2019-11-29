@@ -131,6 +131,13 @@ class Controller_Apis_Ajax extends Controller_Rest
         $flag = $_POST['flag'];
         $value = $_POST['value'];
 
+        // 取得資料數量(交易紀錄 下注紀錄)
+        $member = Session::get('member');
+        DB::select('*')->from('money_record')->where('account', '=', $member)->execute();
+        $totalR = DB::count_last_query();
+        DB::select('*')->from('bet_record')->where('account', '=', $member)->execute();
+        $totalB = DB::count_last_query();
+
         switch ($flag) {
             // 登出 清除Session
             case 'logout':
@@ -168,13 +175,13 @@ class Controller_Apis_Ajax extends Controller_Rest
             // 取得交易紀錄
             case 'getRecord':
                 $nowAcc = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
-                $record = DB::select('*')->from('money_record')->where('account', '=', $nowAcc)->execute()->as_array();
+                $record = DB::select('*')->from('money_record')->where('account', '=', $nowAcc)->limit($value)->offset(0)->execute()->as_array();
                 echo json_encode($record);
                 break;
             // 取得下注紀錄
             case 'getBetRecord':
                 $nowAcc = Session::get('member'); // 透過登入時設定的Session 取得目前登入帳號
-                $betRecord = DB::select('*')->from('bet_record')->where('account', '=', $nowAcc)->execute()->as_array();
+                $betRecord = DB::select('*')->from('bet_record')->where('account', '=', $nowAcc)->limit($value)->offset(0)->execute()->as_array();
 
                 // 透過 下注時間 與 自動遞增的PK 組成注單編號
                 foreach ($betRecord as $key => $value) {
@@ -189,6 +196,66 @@ class Controller_Apis_Ajax extends Controller_Rest
                     $betRecord[$key]['serialNum'] = $serialNum;
                 }
                 echo json_encode($betRecord);
+                break;
+            // 回傳資料數量(交易紀錄 下注紀錄)
+            case 'getTotalRB':
+                echo $totalR . "|" . $totalB;
+                break;
+            // 交易紀錄換頁(向前/後共用)
+            case 'spageR':
+                $val = explode('|', $value);
+                $rpp = $val[1]; // 一頁幾筆資料
+                $page = $val[0]; // 移動的頁面
+                $totalPages = ceil($totalR / $rpp); // 總頁數
+                if ($page > $totalPages) {
+                    $offset = $rpp * ($totalPages - 1);
+                    $sql = DB::select('*')->from('money_record')->where('account', '=', $member)->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                } else {
+                    $offset = $rpp * ($page - 1);
+                    $sql = DB::select('*')->from('money_record')->where('account', '=', $member)->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                }
+                break;
+            // 下注紀錄換頁(向前/後共用)
+            case 'spageB':
+                $val = explode('|', $value);
+                $rpp = $val[1]; // 一頁幾筆資料
+                $page = $val[0]; // 移動的頁面
+                $totalPages = ceil($totalB / $rpp); // 總頁數
+                if ($page > $totalPages) {
+                    $offset = $rpp * ($totalPages - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', $member)->limit($rpp)->offset($offset)->execute()->as_array();
+                    // 透過 下注時間 與 自動遞增的PK 組成注單編號
+                    foreach ($sql as $key => $value) {
+                        $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
+                        $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                        $num = $sql[$key]['bet_serial_num']; // 取得編號
+                        $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                        // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                        $serialNum = $ymd[0] . $num;
+                        $sql[$key]['serialNum'] = $serialNum;
+                    }
+                    echo json_encode($sql);
+                } else {
+                    $offset = $rpp * ($page - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', $member)->limit($rpp)->offset($offset)->execute()->as_array();
+                    // 透過 下注時間 與 自動遞增的PK 組成注單編號
+                    foreach ($sql as $key => $value) {
+                        $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
+                        $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                        $num = $sql[$key]['bet_serial_num']; // 取得編號
+                        $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                        // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                        $serialNum = $ymd[0] . $num;
+                        $sql[$key]['serialNum'] = $serialNum;
+                    }
+                    echo json_encode($sql);
+                }
                 break;
             default:
                 echo "POST ERROR";
@@ -606,6 +673,87 @@ class Controller_Apis_Ajax extends Controller_Rest
             default:
                 echo "POST ERROR";
                 break;
+        }
+    }
+
+    public function post_setting() 
+    {
+        $flag = $_POST['flag'];
+        $value = $_POST['value'];
+
+        // 取得資料數量
+        DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->execute();
+        $total = DB::count_last_query();
+
+        switch ($flag) {
+            case 'getTotal':
+                echo json_encode($total);
+                break;
+
+            case 'showBetRecord':
+                $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit($value)->offset(0)->execute()->as_array();
+                echo json_encode($sql);
+                break;
+
+            case 'spage':
+                $val = explode('|', $value);
+                $rpp = $val[1]; // 一頁幾筆資料
+                $page = $val[0]; // 移動的頁面
+                $totalPages = ceil($total / $rpp); // 總頁數
+                if ($page > $totalPages) {
+                    $offset = $rpp * ($totalPages - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                    // var_dump($sql);
+                } else {
+                    $offset = $rpp * ($page - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                    // var_dump($sql);
+                }
+                break;
+            
+            case 'sds':
+                // $val = explode('|', $value);
+                // $rpp = $val[1]; // row per page
+                // $page = $val[0];
+                // $totalPages = ceil($total / $rpp);
+                // if () {
+
+                // }
+                // $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit($value)->offset(0)->execute()->as_array();
+                // echo json_encode($sql);
+                break;
+
+            default:
+                # code...
+                break;
+        }
+        
+        // $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit(20)->offset(0)->execute()->as_array();
+
+        // echo json_encode($sql);
+        // echo $total;
+    }
+
+    public function get_setting()
+    {
+        
+        // 取得資料數量
+        DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->execute();
+        $total = DB::count_last_query();
+
+        $rpp = 20; // row per page
+        $totalPages = ceil($total / $rpp);
+        $page = $_GET['betpage'];
+        if ($page > $totalPages) {
+            $offset = $totalPages * 20 - 20;
+            $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit(20)->offset($offset)->execute()->as_array();
+            echo json_encode($sql);
+        } else {
+            $offset = $page * 20 - 20;
+            $sql = DB::select('*')->from('bet_record')->where('account', '=', 'ayaya')->limit(20)->offset($offset)->execute()->as_array();
+            echo json_encode($sql);
         }
     }
 }

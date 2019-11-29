@@ -73,11 +73,11 @@ class Controller_Apis_User extends Controller
     public function action_setting()
     {
         // example: google search
-        echo Form::open(array('action' => 'http://google.com/search?', 'method' => 'get'));
-        echo Form::input('q', 'value', array('style' => 'border: 3px green dotted;'));
-        echo Form::csrf();
-        echo Form::submit();
-        echo Form::close();
+        // echo Form::open(array('action' => 'http://google.com/search?', 'method' => 'get'));
+        // echo Form::input('q', 'value', array('style' => 'border: 3px green dotted;'));
+        // echo Form::csrf();
+        // echo Form::submit();
+        // echo Form::close();
         // ===============================================================================
         return Response::forge(View::forge('userpage/setting'));
     }
