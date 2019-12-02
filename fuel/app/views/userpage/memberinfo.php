@@ -18,6 +18,10 @@ if (is_null($member)) {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- use element-ui -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="//unpkg.com/element-ui/lib/umd/locale/zh-TW.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </head>
@@ -134,7 +138,7 @@ if (is_null($member)) {
                         <th>交易敘述</th>
                     </tr>
                     <tr v-for="(item, index) in record" :key="index">
-                        <td>{{ item.id }}</td>              
+                        <td>{{ index + 1 }}</td>              
                         <td>{{ item.update_time }}</td>                 
                         <td>{{ item.status }}</td>           
                         <td>{{ item.update_money }}</td>
@@ -155,6 +159,7 @@ if (is_null($member)) {
                 <hr>
                 <table class="table table-bordered">
                     <tr>
+                        <th>Id</th>
                         <th>下注時間</th>
                         <th>注單編號</th>
                         <th>開獎結果</th>
@@ -165,6 +170,7 @@ if (is_null($member)) {
                         <th>下注結果</th>
                     </tr>
                     <tr v-for="(item, index) in betRecord" :key="index">
+                        <td>{{ index + 1 }}</td>
                         <td>{{ item.bet_time }}</td>              
                         <td>{{ item.serialNum }}</td>                 
                         <td>{{ item.win_list }}</td>           
@@ -290,6 +296,7 @@ if (is_null($member)) {
                             _this.betRecord = error;
                         });
                 },
+                // 取得總資料數
                 getTotalRB() {
                     let _this = this;
                     let formData = new FormData();
@@ -317,6 +324,7 @@ if (is_null($member)) {
                         axios.post('/apis/ajax/memberinfo', formData)
                             .then(function (response){
                                 _this.record = response.data;
+                                _this.totalPageR = Math.ceil(_this.totalR / _this.listLengthR);
                                 // console.log(response.data);
                             }).catch(function (error) {
                                 alert(error);
@@ -334,6 +342,7 @@ if (is_null($member)) {
                         axios.post('/apis/ajax/memberinfo', formData)
                             .then(function (response){
                                 _this.record = response.data;
+                                _this.totalPageR = Math.ceil(_this.totalR / _this.listLengthR);
                                 // console.log(response.data);
                             }).catch(function (error) {
                                 alert(error);
@@ -350,6 +359,7 @@ if (is_null($member)) {
                         axios.post('/apis/ajax/memberinfo', formData)
                             .then(function (response){
                                 _this.betRecord = response.data;
+                                _this.totalPageB = Math.ceil(_this.totalB / _this.listLengthB);
                                 // console.log(response.data);
                             }).catch(function (error) {
                                 alert(error);
@@ -366,6 +376,7 @@ if (is_null($member)) {
                         axios.post('/apis/ajax/memberinfo', formData)
                             .then(function (response){
                                 _this.betRecord = response.data;
+                                _this.totalPageB = Math.ceil(_this.totalB / _this.listLengthB);
                                 // console.log(response.data);
                             }).catch(function (error) {
                                 alert(error);

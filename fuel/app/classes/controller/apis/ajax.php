@@ -365,10 +365,41 @@ class Controller_Apis_Ajax extends Controller_Rest
                 echo "/apis/user/memberlist";
                 break;
             // 取得指定會員交易紀錄
-            case 'getRecord':
+            case 'showRecord':
+                // 取得起始時間[0] 結束時間[1] 顯示資料數量[2]
+                $val = explode('|', $value);
                 $memberRecord = Session::get('record');
-                $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->order_by('update_time', 'desc')->execute()->as_array();
+
+                // 取得資料數量(交易紀錄)
+                DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->and_where('update_time', 'between', array($val[0], $val[1]))->execute();
+                $totalColumn = DB::count_last_query();
+
+                // 取得實際資料內容
+                $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->and_where('update_time', 'between', array($val[0], $val[1]))->limit($val[2])->execute()->as_array();
+                
+                foreach ($sql as $key => $value) {
+                    $sql[$key]['totalColumn'] = $totalColumn; // 將總資料數量 併入陣列回傳
+                }
                 echo json_encode($sql);
+                break;
+            
+            case 'spage':
+                // 取得起始時間[0] 結束時間[1] 欲切換頁碼[2] 一頁幾筆資料[3] 總資料數量[4]
+                $val = explode('|', $value);
+                $memberRecord = Session::get('record');
+                $rpp = $val[3]; // 一頁幾筆資料
+                $nextPage = $val[2]; // 欲切換頁碼
+                $total = $val[4]; // 總資料數量
+                $totalPages = ceil($total / $rpp); // 總頁數
+                if ($nextPage > $totalPages) {
+                    $offset = $rpp * ($totalPages - 1);
+                    $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->and_where('update_time', 'between', array($val[0], $val[1]))->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                } else {
+                    $offset = $rpp * ($nextPage - 1);
+                    $sql = DB::select('*')->from('money_record')->where('account', '=', $memberRecord)->and_where('update_time', 'between', array($val[0], $val[1]))->limit($rpp)->offset($offset)->execute()->as_array();
+                    echo json_encode($sql);
+                }
                 break;
             default:
                 echo "POST ERROR";
@@ -389,10 +420,18 @@ class Controller_Apis_Ajax extends Controller_Rest
                 Session::delete('memberBetRecord');
                 echo "/apis/user/memberlist";
                 break;
-            // 取得指定會員交易紀錄    
+            // 取得指定會員下注紀錄    
             case 'showBetRecord':
+                // 取得起始時間[0] 結束時間[1] 顯示資料數量[2]
+                $val = explode('|', $value);
                 $memberBetRecord = Session::get('betRecord');
-                $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->order_by('bet_time', 'desc')->execute()->as_array();
+
+                // 取得資料數量(下注紀錄)
+                DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->and_where('bet_time', 'between', array($val[0], $val[1]))->execute();
+                $totalColumn = DB::count_last_query();
+
+                // 取得實際資料內容
+                $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->and_where('bet_time', 'between', array($val[0], $val[1]))->limit($val[2])->execute()->as_array();
 
                 // 透過 下注時間 與 自動遞增的PK 組成注單編號
                 foreach ($sql as $key => $value) {
@@ -405,8 +444,53 @@ class Controller_Apis_Ajax extends Controller_Rest
                     // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
                     $serialNum = $ymd[0] . $num;
                     $sql[$key]['serialNum'] = $serialNum;
+                    $sql[$key]['totalColumn'] = $totalColumn; // 將總資料數量 併入陣列回傳
                 }
+                
                 echo json_encode($sql);
+                break;
+
+            case 'spage':
+                // 取得起始時間[0] 結束時間[1] 欲切換頁碼[2] 一頁幾筆資料[3] 總資料數量[4]
+                $val = explode('|', $value);
+                $memberBetRecord = Session::get('betRecord');
+                $rpp = $val[3]; // 一頁幾筆資料
+                $nextPage = $val[2]; // 欲切換頁碼
+                $total = $val[4]; // 總資料數量
+                $totalPages = ceil($total / $rpp); // 總頁數
+                if ($nextPage > $totalPages) {
+                    $offset = $rpp * ($totalPages - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->and_where('bet_time', 'between', array($val[0], $val[1]))->limit($rpp)->offset($offset)->execute()->as_array();
+                    // 透過 下注時間 與 自動遞增的PK 組成注單編號
+                    foreach ($sql as $key => $value) {
+                        $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
+                        $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                        $num = $sql[$key]['bet_serial_num']; // 取得編號
+                        $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                        // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                        $serialNum = $ymd[0] . $num;
+                        $sql[$key]['serialNum'] = $serialNum;
+                    }
+                    echo json_encode($sql);
+                } else {
+                    $offset = $rpp * ($nextPage - 1);
+                    $sql = DB::select('*')->from('bet_record')->where('account', '=', $memberBetRecord)->and_where('bet_time', 'between', array($val[0], $val[1]))->limit($rpp)->offset($offset)->execute()->as_array();
+                    // 透過 下注時間 與 自動遞增的PK 組成注單編號
+                    foreach ($sql as $key => $value) {
+                        $ymd = explode(" ", $sql[$key]['bet_time']); // 取得年月日
+                        $ymd[0] = str_replace("-", "", $ymd[0]);
+
+                        $num = $sql[$key]['bet_serial_num']; // 取得編號
+                        $num = str_pad($num, 12, "0", STR_PAD_LEFT); // 將編號補足12碼
+
+                        // 產生注單編號：年4碼 + 月2碼 + 日2碼 + 不重複唯一碼(12) 共 20 碼, 併入陣列中回傳
+                        $serialNum = $ymd[0] . $num;
+                        $sql[$key]['serialNum'] = $serialNum;
+                    }
+                    echo json_encode($sql);
+                }
                 break;
             default:
                 echo "POST ERROR";
