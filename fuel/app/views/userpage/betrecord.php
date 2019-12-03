@@ -125,7 +125,7 @@ if (is_null($admin) && !is_null($member)) {
                     formData.append('value', `${this.startDate}|${this.endDate}|${this.listLength}`);
                     axios.post('/apis/ajax/betrecord', formData)
                         .then(function (response) {
-                            _this.betRecord = response.data;
+                            _this.betRecord = response.data;  // 取得回傳資料
 
                             // 查到資料 與 查不到資料 的顯示內容
                             if (_this.betRecord.length != 0) {
@@ -152,9 +152,7 @@ if (is_null($admin) && !is_null($member)) {
                         formData.append('value', `${this.startDate}|${this.endDate}|${this.count}|${this.listLength}|${this.total}`);
                         axios.post('/apis/ajax/betrecord', formData)
                             .then(function (response){
-                                _this.betRecord = response.data;
-                                // _this.totalPage = Math.ceil(_this.total / _this.listLength);
-                                // console.log(response.data);
+                                _this.betRecord = response.data;  // 取得回傳資料
                             }).catch(function (error) {
                                 alert(error);
                             });
@@ -171,18 +169,12 @@ if (is_null($admin) && !is_null($member)) {
                         formData.append('value', `${this.startDate}|${this.endDate}|${this.count}|${this.listLength}|${this.total}`);
                         axios.post('/apis/ajax/betrecord', formData)
                             .then(function (response){
-                                _this.betRecord = response.data;
-                                // _this.totalPage = Math.ceil(_this.total / _this.listLength);
-                                // console.log(response.data);
+                                _this.betRecord = response.data;  // 取得回傳資料
                             }).catch(function (error) {
                                 alert(error);
                             });
                     }
                 },
-                // getRange() {
-                //     console.log(this.startDate);
-                //     console.log(this.endDate);
-                // },
             },
         })
     </script>

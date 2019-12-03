@@ -22,8 +22,13 @@ if (!is_null($admin)) {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- use element-ui -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="//unpkg.com/element-ui/lib/umd/locale/zh-TW.js"></script>
     
     <style>
+        /* 拉霸動畫效果 */
         @-webkit-keyframes flip-horizontal-bottom {
             0% {
                 -webkit-transform: rotateX(0);
@@ -114,6 +119,7 @@ if (!is_null($admin)) {
         <br>
         <h3>BBIN 拉霸機</h3>
         <hr>
+        <!-- 判斷是否為會員登入 -->
         <?php
             if (!is_null($member)) {
                 echo "歡迎 " . $member; 
@@ -122,6 +128,7 @@ if (!is_null($admin)) {
             }
         ?>
         <br><br>
+        <!-- 顯示帳號狀態 -->
         {{ accountStatus }}
         <br><br>
         錢包餘額：
@@ -158,14 +165,6 @@ if (!is_null($admin)) {
         <br>
         <button class="btn btn-primary" v-on:click="go" v-bind:disabled="goBtn">GO!</button>
         <br><br>
-        <!-- <table class="table table-bordered">
-            <tr>
-                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barA }} </th>
-                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barB }} </th>
-                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barC }} </th>
-                <th class="text-center" v-bind:style="{ animation: aniKeyframe }"> {{ barD }} </th>
-            </tr>
-        </table> -->
 
         <div class="row">
             <div class="col-sm-2 table-bordered text-center" v-bind:style="{ animation: aniKeyframe, backgroundColor: setColor, fontWeight: fWeight }">{{ barA }}</div>
@@ -212,15 +211,15 @@ if (!is_null($admin)) {
             </tr>
             <tr>
                 <th class="text-center">金額</th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betA" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betB" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betC" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betD" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betE" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betF" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betG" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betH" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
-                <th class="text-center"><input type="text" class="cannotCP" v-model="betI" onkeypress='return event.charCode >= 48 && event.charCode <= 57' v-bind:disabled="editDisabled"></th>
+                <th class="text-center"><el-input-number size="small" v-model="betA" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betB" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betC" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betD" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betE" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betF" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betG" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betH" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
+                <th class="text-center"><el-input-number size="small" v-model="betI" :min="0" :max="5000" :step="1" step-strictly :disabled="editDisabled"></el-input-number></th>
             </tr>
         </table>
         <hr>
@@ -271,6 +270,7 @@ if (!is_null($admin)) {
     </div>
 
     <script>
+        ELEMENT.locale(ELEMENT.lang.zhTW); // ELEMENT 套件語言設定
         let bar = new Vue({
             el: "#bar",
             data: {
@@ -306,7 +306,7 @@ if (!is_null($admin)) {
                 aniKeyframe: "", // 存放拉霸動畫效果
                 setColor: "rgb(255, 255, 255)", // 拉霸盤面顏色
                 fWeight: "bold", // 拉霸盤面字體粗細
-                randBBIN: ['B', 'B', 'I', 'N', '*', '*'],
+                randBBIN: ['B', 'B', 'I', 'N', '*', '*'], // 拉霸轉動時 隨機產生值
             },
             mounted() {
                 // 進入(或重整)頁面時 取得登入與帳號狀態 以及 目前錢包餘額
@@ -326,7 +326,7 @@ if (!is_null($admin)) {
 
                             let temp = _this.result.split('-');
                                 
-                            /* 顯示拉霸盤面 */ 
+                            /* 取得回傳拉霸盤面 */ 
                             let barView = temp[1];
                             barView = barView.replace(/[[]/gm,"");
                             barView = barView.replace(/["]]/gm,"");
@@ -369,7 +369,7 @@ if (!is_null($admin)) {
                                 _this.totalWinMoney = _this.winMoney.reduce(reducer);
 
                                 _this.aniKeyframe = ""; // 動畫效果結束 移除Keyframe
-                                _this.setColor = "rgb(255, 128, 128)";
+                                _this.setColor = "rgb(255, 128, 128)"; // 顯示開獎結果時 變換盤面顏色
                                 _this.getMoney(); // 完成開獎 更新會員目前餘額
                             }, 5000);
                                 
@@ -405,11 +405,11 @@ if (!is_null($admin)) {
                 },
                 // 鎖定下注注項
                 saveAll() {
-                    // if (this.betA == "" && this.betB == "" && this.betC == "" && this.betD == "" && this.betE == "" && this.betF == "" && this.betG == "" && this.betH == "" && this.betI == "") {
                     if (this.betA + this.betB + this.betC + this.betD + this.betE + this.betF + this.betG + this.betH + this.betI <= 0) {
                         // 下注金額總和小於或等於零 代表使用者未下注 跳出提示
                         alert('至少下一注');
                     } else {
+                        // 儲存各注項投注金額
                         this.betList.push(this.betA);
                         this.betList.push(this.betB);
                         this.betList.push(this.betC);
@@ -423,12 +423,14 @@ if (!is_null($admin)) {
                         // 判斷各注項金額是否為空白(未填) 或是超過5000
                         let blankAndZero = false;
                         for (let i = 0; i < this.betList.length; i++) {
-                            if (this.betList[i] == '' || this.betList[i] > 5000) {
+                            if (this.betList[i] == null || this.betList[i] > 5000) {
                                 blankAndZero = true;
                             }
                         }
+                        console.log(typeof this.betList[0]);
                         if (blankAndZero == true) {
                             alert('單一注項金額最高為5000，且任一注不能留空');
+                            console.log(typeof this.betList[0]);
                             this.betList = [];
                         } else {
                             // 計算投注總金額
@@ -494,6 +496,7 @@ if (!is_null($admin)) {
                             alert(error);
                         });
                 },
+                // 帳號登出
                 logout() {
                     let _this = this;
                     let formData = new FormData();

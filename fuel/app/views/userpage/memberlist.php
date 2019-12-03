@@ -20,6 +20,10 @@ if (is_null($admin)) {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- use element-ui -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="//unpkg.com/element-ui/lib/umd/locale/zh-TW.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </head>
@@ -64,9 +68,9 @@ if (is_null($admin)) {
                 <th>下注紀錄</th>
                 <th>交易紀錄</th>
                 <th>金額調整</th>
-                <th>ban_btn</th>
-                <th>lock_btn</th>
-                <th>on_btn</th>
+                <th>凍結</th>
+                <th>停權</th>
+                <th>解除凍結/停權</th>
             </tr>
             <tr v-for="(item, index) in members" :key="index">
                 <td>{{ index + 1 }}</td>              
@@ -76,6 +80,7 @@ if (is_null($admin)) {
                 <td><button v-on:click="betRecord(item.account)">下注紀錄</button></td>
                 <td><button v-on:click="record(item.account)">交易紀錄</button></td>
                 <td>
+                    <!-- <el-input-number size="small" v-model="moneyChange" :min="0" :max="5000" :step="1" step-strictly> -->
                     <input type="text" maxlength="20" v-model="moneyChange">
                     <button v-on:click="addMoney(item.account)">加錢</button>
                     <button v-on:click="subMoney(item.account)">扣錢</button>
@@ -88,6 +93,7 @@ if (is_null($admin)) {
     </div>
 
     <script>
+        ELEMENT.locale(ELEMENT.lang.zhTW); // ELEMENT 套件語言設定
         let controll = new Vue({
             el: "#controll",
             data: {
